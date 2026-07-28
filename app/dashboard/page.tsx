@@ -8,7 +8,6 @@ import IWantToPlay from "@/components/heartbeat/IWantToPlay";
 import LookingForPlayer from "@/components/heartbeat/LookingForPlayer";
 import SportsFeed from "@/components/feed/SportsFeed";
 import LocationBar from "@/components/heartbeat/LocationBar";
-import { SIDEBAR_WIDTH_PERCENT, FEED_WIDTH_PERCENT, RIGHT_PANEL_WIDTH_PERCENT } from "@/lib/constants";
 
 /**
  * Dashboard Page - Server Component
