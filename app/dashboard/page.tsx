@@ -16,7 +16,7 @@ import LocationBar from "@/components/heartbeat/LocationBar";
  */
 export default async function DashboardPage() {
   // Ensure user is authenticated
-  const user = await requireAuth();
+  await requireAuth();
 
   // Fetch player profile for the sidebar
   const player = await getCurrentPlayerProfile();

@@ -11,7 +11,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Avatar from "@/components/ui/Avatar";
 
-// ----- Animation Variants -----
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -31,8 +30,6 @@ const itemVariants = {
     transition: { type: "spring", stiffness: 300, damping: 25 },
   },
 };
-
-// ----- Component -----
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -55,7 +52,6 @@ export default function EditProfilePage() {
   const [isFetching, setIsFetching] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Fetch existing profile data
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -68,11 +64,14 @@ export default function EditProfilePage() {
           return;
         }
 
-        const { data: player, error } = await supabase
+        const { data, error } = await supabase
           .from("players")
           .select("*")
           .eq("auth_id", user.id)
           .single();
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const player = data as any;
 
         if (error || !player) {
           console.error("Error fetching profile:", error?.message);
@@ -113,7 +112,6 @@ export default function EditProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file
     if (file.size > 5 * 1024 * 1024) {
       setServerError("Profile photo must be less than 5MB");
       return;
@@ -177,7 +175,6 @@ export default function EditProfilePage() {
     e.preventDefault();
     setServerError(null);
 
-    // Validate
     const result = profileSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof ProfileInput, string>> = {};
@@ -201,7 +198,6 @@ export default function EditProfilePage() {
         return;
       }
 
-      // Upload profile photo if changed
       let profilePhotoUrl = profilePhoto;
       if (profilePhotoFile) {
         profilePhotoUrl = await uploadImage(
@@ -211,7 +207,6 @@ export default function EditProfilePage() {
         );
       }
 
-      // Upload cover photo if changed
       let coverPhotoUrl = coverPhoto;
       if (coverPhotoFile) {
         coverPhotoUrl = await uploadImage(
@@ -221,9 +216,9 @@ export default function EditProfilePage() {
         );
       }
 
-      // Update player profile
-      const { error: updateError } = await supabase
-        .from("players")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: updateError } = await (supabase
+        .from("players") as any)
         .update({
           full_name: formData.fullName,
           bio: formData.bio,
@@ -242,7 +237,6 @@ export default function EditProfilePage() {
 
       setIsSuccess(true);
 
-      // Redirect after short delay
       setTimeout(() => {
         router.push(ROUTES.DASHBOARD);
         router.refresh();
@@ -266,7 +260,6 @@ export default function EditProfilePage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-neutral-200">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
@@ -289,7 +282,6 @@ export default function EditProfilePage() {
           initial="hidden"
           animate="visible"
         >
-          {/* Success Message */}
           <AnimatePresence>
             {isSuccess && (
               <motion.div
@@ -306,7 +298,6 @@ export default function EditProfilePage() {
             )}
           </AnimatePresence>
 
-          {/* Server Error */}
           <AnimatePresence>
             {serverError && (
               <motion.div
@@ -327,7 +318,6 @@ export default function EditProfilePage() {
 
           <form onSubmit={handleSubmit}>
             <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-              {/* Cover Photo */}
               <motion.div
                 variants={itemVariants}
                 className="relative h-40 bg-gradient-to-r from-primary-green/20 to-electric-blue/20"
@@ -353,7 +343,6 @@ export default function EditProfilePage() {
                 </label>
               </motion.div>
 
-              {/* Profile Photo */}
               <motion.div
                 variants={itemVariants}
                 className="px-6 -mt-10 relative z-10"
@@ -382,7 +371,6 @@ export default function EditProfilePage() {
                 />
               </motion.div>
 
-              {/* Form Fields */}
               <div className="p-6 flex flex-col gap-4">
                 <Input
                   label="Full name"
@@ -430,7 +418,6 @@ export default function EditProfilePage() {
                 />
               </div>
 
-              {/* Actions */}
               <div className="px-6 pb-6 flex flex-col sm:flex-row gap-3">
                 <Button
                   type="button"
