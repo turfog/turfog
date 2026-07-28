@@ -11,7 +11,6 @@ import {
   MapPinIcon,
   SearchIcon,
   PlusIcon,
-  ChevronRightIcon,
   FootballIcon,
   CricketIcon,
   BasketballIcon,

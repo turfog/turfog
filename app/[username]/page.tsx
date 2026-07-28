@@ -16,11 +16,13 @@ export async function generateMetadata({ params }: ProfilePageProps) {
   const { username } = await params;
   const supabase = await createServerSupabaseClient();
 
-  const { data: player } = await supabase
+  const { data } = await supabase
     .from("players")
     .select("full_name, username, bio")
     .eq("username", username.toLowerCase())
     .single();
+
+  const player = data as { full_name: string; username: string; bio: string } | null;
 
   if (!player) {
     return { title: "Profile not found | Turfog" };
@@ -37,12 +39,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const supabase = await createServerSupabaseClient();
   const currentUser = await getAuthenticatedUser();
 
-  const { data: player, error } = await supabase
+  const { data, error } = await supabase
     .from("players")
     .select("*")
     .eq("username", username.toLowerCase())
-    .returns<Player>()
     .single();
+
+  const player = data as Player | null;
 
   if (error || !player) {
     notFound();
@@ -57,9 +60,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       .from("players")
       .select("*")
       .eq("auth_id", currentUser.id)
-      .returns<Player>()
       .single();
-    ownPlayer = own;
+
+    ownPlayer = own as Player | null;
   }
 
   return (

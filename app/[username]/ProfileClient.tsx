@@ -13,8 +13,6 @@ import Button from "@/components/ui/Button";
 import {
   ChevronLeftIcon,
   SettingsIcon,
-  ShareIcon,
-  MessageCircleIcon,
   PlusIcon,
 } from "@/components/SvgIcons";
 
@@ -44,7 +42,7 @@ const itemVariants = {
 export default function ProfileClient({
   profile,
   isOwnProfile,
-  currentUserId,
+    currentUserId: _currentUserId,
 }: ProfileClientProps) {
   const handleShare = async () => {
     if (navigator.share) {
@@ -54,7 +52,6 @@ export default function ProfileClient({
       });
     } else {
       await navigator.clipboard.writeText(window.location.href);
-      alert("Profile link copied to clipboard");
     }
   };
 
@@ -64,7 +61,6 @@ export default function ProfileClient({
       initial="hidden"
       animate="visible"
     >
-      {/* Back Navigation */}
       <motion.div variants={itemVariants} className="px-4 py-3">
         <Link
           href={ROUTES.DASHBOARD}
@@ -75,12 +71,10 @@ export default function ProfileClient({
         </Link>
       </motion.div>
 
-      {/* Profile Hero */}
       <motion.div variants={itemVariants}>
         <ProfileHero profile={profile} isOwnProfile={isOwnProfile} />
       </motion.div>
 
-      {/* Action Buttons */}
       <motion.div
         variants={itemVariants}
         className="px-4 py-3 flex items-center gap-2"
@@ -136,7 +130,6 @@ export default function ProfileClient({
         )}
       </motion.div>
 
-      {/* Reputation Badge */}
       <motion.div variants={itemVariants} className="px-4 py-2">
         <ReputationBadge
           reliabilityScore={profile.reliabilityScore}
@@ -146,7 +139,6 @@ export default function ProfileClient({
         />
       </motion.div>
 
-      {/* Stats */}
       <motion.div variants={itemVariants} className="px-4 py-4">
         <ProfileStats
           totalMatches={profile.totalMatches}
@@ -160,7 +152,6 @@ export default function ProfileClient({
         />
       </motion.div>
 
-      {/* Bio */}
       {profile.bio && (
         <motion.div variants={itemVariants} className="px-4 py-3">
           <h3 className="text-body-sm font-semibold text-neutral-900 mb-2">
@@ -172,7 +163,6 @@ export default function ProfileClient({
         </motion.div>
       )}
 
-      {/* Match History */}
       <motion.div variants={itemVariants} className="px-4 py-4">
         <h3 className="text-body-sm font-semibold text-neutral-900 mb-3">
           Recent matches
@@ -183,13 +173,7 @@ export default function ProfileClient({
   );
 }
 
-function MessageCircleIcon({ size = 24, className = "" }: { size?: number; className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
+// ----- Local SVG Icons -----
 
 function ShareIcon({ size = 24, className = "" }: { size?: number; className?: string }) {
   return (
@@ -199,6 +183,14 @@ function ShareIcon({ size = 24, className = "" }: { size?: number; className?: s
       <circle cx="18" cy="19" r="3" />
       <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
       <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  );
+}
+
+function MessageCircleIcon({ size = 24, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   );
 }

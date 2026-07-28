@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { forgotPasswordSchema, type ForgotPasswordInput } from "@/lib/validators";
+import { forgotPasswordSchema } from "@/lib/validators";
 import { ROUTES } from "@/lib/constants";
 import { MailIcon, AlertCircleIcon, CheckCircleIcon, ChevronLeftIcon } from "@/components/SvgIcons";
 import Button from "@/components/ui/Button";
