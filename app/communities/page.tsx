@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default async function CommunitiesPage() {
-  const user = await requireAuth();
+  await requireAuth();
   const player = await getCurrentPlayerProfile();
 
   if (!player) {
