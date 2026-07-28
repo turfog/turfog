@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: ProfilePageProps) {
 
   const { data: player } = await supabase
     .from("players")
-    .select("*")
+    .select("full_name, username, bio")
     .eq("username", username.toLowerCase())
     .single();
 
@@ -41,6 +41,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     .from("players")
     .select("*")
     .eq("username", username.toLowerCase())
+    .returns<Player>()
     .single();
 
   if (error || !player) {
@@ -50,13 +51,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const profile = mapToPublicProfile(player);
   const isOwnProfile = currentUser?.id === player.auth_id;
 
-  // Fetch own player data for layout components
   let ownPlayer: Player | null = null;
   if (currentUser) {
     const { data: own } = await supabase
       .from("players")
       .select("*")
       .eq("auth_id", currentUser.id)
+      .returns<Player>()
       .single();
     ownPlayer = own;
   }
