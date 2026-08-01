@@ -1,43 +1,18 @@
-import { NextResponse, type NextRequest } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { ROUTES } from "@/lib/constants";
+import { NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-  const redirectTo = requestUrl.searchParams.get("redirect") || ROUTES.DASHBOARD;
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/dashboard";
 
   if (code) {
     const supabase = await createServerSupabaseClient();
-
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-
     if (!error) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        const { data } = await supabase
-          .from("players")
-          .select("username_set")
-          .eq("auth_id", user.id)
-          .single();
-
-        const player = data as { username_set: boolean } | null;
-
-        if (!player?.username_set) {
-          return NextResponse.redirect(
-            new URL(ROUTES.SETUP_USERNAME, requestUrl.origin)
-          );
-        }
-      }
-
-      return NextResponse.redirect(new URL(redirectTo, requestUrl.origin));
+      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
-  const errorUrl = new URL(ROUTES.SIGN_IN, requestUrl.origin);
-  errorUrl.searchParams.set("error", "auth_callback_failed");
-  return NextResponse.redirect(errorUrl);
+  return NextResponse.redirect(`${origin}/auth/sign-in`);
 }

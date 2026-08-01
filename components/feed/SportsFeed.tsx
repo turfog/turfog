@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { timeAgo, truncateText } from "@/lib/utils";
-import { SPORTS } from "@/lib/constants";
-import type { FeedItem } from "@/types/feed";
-import type { SportId } from "@/types/heartbeat";
+import { cn, timeAgo } from "@/lib/utils";
+import type { FeedItem, SportId } from "@/types";
+import Avatar from "@/components/ui/Avatar";
+import Badge from "@/components/ui/Badge";
+import Card from "@/components/ui/Card";
 import {
   RunIcon,
   UsersIcon,
@@ -14,13 +14,11 @@ import {
   CheckCircleIcon,
   FootballIcon,
   CricketIcon,
-  BasketballIcon,
+  PickleballIcon,
+  PadelIcon,
   BadmintonIcon,
+  TrophyIcon,
 } from "@/components/SvgIcons";
-import Avatar from "@/components/ui/Avatar";
-import Badge from "@/components/ui/Badge";
-import Card from "@/components/ui/Card";
-import Skeleton from "@/components/ui/Skeleton";
 
 // ----- Mock Feed Data -----
 
@@ -37,8 +35,8 @@ const mockFeedItems: FeedItem[] = [
       userAvatar: "",
       sport: "football",
       skillLevel: "intermediate",
-      location: "Andheri West, Mumbai",
-      note: "Ready for a 5-a-side match this evening. Available after 6 PM.",
+      location: "Andheri west, Mumbai",
+      note: "Ready for a 5v5 match this evening. Available after 6 PM.",
     },
   },
   {
@@ -51,10 +49,10 @@ const mockFeedItems: FeedItem[] = [
       userId: "user2",
       userName: "Mumbai Strikers",
       userAvatar: "",
-      sport: "cricket",
+      sport: "box-cricket",
       skillLevel: "advanced",
       location: "Bandra, Mumbai",
-      note: "Need 2 players for a T20 match tomorrow morning at 7 AM. Proper gear required.",
+      note: "Need 2 players for a night match tomorrow at 9 PM. Proper gear required.",
     },
   },
   {
@@ -108,26 +106,23 @@ const mockFeedItems: FeedItem[] = [
 
 const filterOptions: Array<{ id: SportId | "all"; name: string; icon?: React.ReactNode }> = [
   { id: "all", name: "All" },
-  { id: "football", name: "Football", icon: <FootballIcon size={16} /> },
-  { id: "cricket", name: "Cricket", icon: <CricketIcon size={16} /> },
-  { id: "basketball", name: "Basketball", icon: <BasketballIcon size={16} /> },
-  { id: "badminton", name: "Badminton", icon: <BadmintonIcon size={16} /> },
+  { id: "football", name: "Football", icon: <FootballIcon size={15} /> },
+  { id: "box-cricket", name: "Box cricket", icon: <CricketIcon size={15} /> },
+  { id: "pickleball", name: "Pickleball", icon: <PickleballIcon size={15} /> },
+  { id: "padel", name: "Padel", icon: <PadelIcon size={15} /> },
+  { id: "badminton", name: "Badminton", icon: <BadmintonIcon size={15} /> },
 ];
 
 // ----- Component -----
 
 export default function SportsFeed() {
   const [activeFilter, setActiveFilter] = useState<SportId | "all">("all");
-  const [isLoading] = useState(false);
 
   const filteredItems =
     activeFilter === "all"
       ? mockFeedItems
       : mockFeedItems.filter((item) => {
-          if (
-            item.type === "heartbeat" &&
-            item.data.kind === "heartbeat"
-          ) {
+          if (item.type === "heartbeat" && item.data.kind === "heartbeat") {
             return item.data.sport === activeFilter;
           }
           if (item.type === "match-result" && item.data.kind === "match-result") {
@@ -140,7 +135,7 @@ export default function SportsFeed() {
     <div>
       {/* Section Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-body-lg font-semibold text-neutral-900">
+        <h2 className="text-body-lg font-semibold text-neutral-900 font-display">
           Sports feed
         </h2>
         <button className="text-body-sm text-electric-blue hover:text-electric-blue-hover font-medium transition-colors">
@@ -174,13 +169,7 @@ export default function SportsFeed() {
 
       {/* Feed Items */}
       <AnimatePresence mode="wait">
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <FeedSkeleton key={i} />
-            ))}
-          </div>
-        ) : filteredItems.length === 0 ? (
+        {filteredItems.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -225,15 +214,13 @@ function FeedItemCard({ item, delay }: { item: FeedItem; delay: number }) {
       transition={{ delay, duration: 0.3, ease: "easeOut" }}
     >
       {item.type === "heartbeat" && item.data.kind === "heartbeat" && (
-        <HeartbeatCard data={item.data} timeAgo={timeAgo(item.createdAt)} />
+        <HeartbeatCard data={item.data} ago={timeAgo(item.createdAt)} />
       )}
-
       {item.type === "match-result" && item.data.kind === "match-result" && (
-        <MatchResultCard data={item.data} timeAgo={timeAgo(item.createdAt)} />
+        <MatchResultCard data={item.data} ago={timeAgo(item.createdAt)} />
       )}
-
       {item.type === "achievement" && item.data.kind === "achievement" && (
-        <AchievementCard data={item.data} timeAgo={timeAgo(item.createdAt)} />
+        <AchievementCard data={item.data} ago={timeAgo(item.createdAt)} />
       )}
     </motion.div>
   );
@@ -243,17 +230,16 @@ function FeedItemCard({ item, delay }: { item: FeedItem; delay: number }) {
 
 function HeartbeatCard({
   data,
-  timeAgo,
+  ago,
 }: {
   data: FeedItem["data"] & { kind: "heartbeat" };
-  timeAgo: string;
+  ago: string;
 }) {
   const isIWantToPlay = data.heartbeatType === "i-want-to-play";
 
   return (
     <Card padding="md" className="hover:border-electric-blue/30 transition-all">
       <div className="flex items-start gap-3">
-        {/* Type Icon */}
         <div
           className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
@@ -264,8 +250,6 @@ function HeartbeatCard({
         >
           {isIWantToPlay ? <RunIcon size={20} /> : <UsersIcon size={20} />}
         </div>
-
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Avatar src={data.userAvatar} alt={data.userName} size="xs" />
@@ -280,17 +264,15 @@ function HeartbeatCard({
               {isIWantToPlay ? "Want to play" : "Need player"}
             </Badge>
           </div>
-
           <p className="text-body-sm text-neutral-600 mb-2 line-clamp-2">
             {data.note}
           </p>
-
           <div className="flex items-center gap-3 text-body-xs text-neutral-400">
             <span className="flex items-center gap-1">
               <MapPinIcon size={12} />
               {data.location}
             </span>
-            <span>{timeAgo}</span>
+            <span>{ago}</span>
           </div>
         </div>
       </div>
@@ -302,10 +284,10 @@ function HeartbeatCard({
 
 function MatchResultCard({
   data,
-  timeAgo,
+  ago,
 }: {
   data: FeedItem["data"] & { kind: "match-result" };
-  timeAgo: string;
+  ago: string;
 }) {
   return (
     <Card padding="md" className="hover:border-emerald/30 transition-all">
@@ -327,7 +309,7 @@ function MatchResultCard({
               <CheckCircleIcon size={12} className="text-emerald" />
               MVP: {data.mvpName}
             </span>
-            <span>{timeAgo}</span>
+            <span>{ago}</span>
           </div>
         </div>
       </div>
@@ -339,19 +321,16 @@ function MatchResultCard({
 
 function AchievementCard({
   data,
-  timeAgo,
+  ago,
 }: {
   data: FeedItem["data"] & { kind: "achievement" };
-  timeAgo: string;
+  ago: string;
 }) {
   return (
     <Card padding="md" className="hover:border-amber/30 transition-all bg-gradient-to-r from-amber/5 to-transparent">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-amber/10 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF9900" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="7" />
-            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
-          </svg>
+        <div className="w-10 h-10 bg-amber/10 rounded-xl flex items-center justify-center flex-shrink-0">
+          <TrophyIcon size={20} className="text-amber" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -368,34 +347,10 @@ function AchievementCard({
           <div className="flex items-center gap-3 text-body-xs text-neutral-400">
             <span>{data.achievementDescription}</span>
             <span className="text-amber font-medium">+{data.xpEarned} XP</span>
-            <span>{timeAgo}</span>
+            <span>{ago}</span>
           </div>
         </div>
       </div>
     </Card>
-  );
-}
-
-// ----- Loading Skeleton -----
-
-function FeedSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl border border-neutral-200 p-4">
-      <div className="flex items-start gap-3">
-        <Skeleton variant="circular" width={40} height={40} />
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
-            <Skeleton variant="text" width={120} height={16} />
-            <Skeleton variant="text" width={80} height={20} className="rounded-full" />
-          </div>
-          <Skeleton variant="text" width="90%" height={14} />
-          <Skeleton variant="text" width="70%" height={14} />
-          <div className="flex items-center gap-3">
-            <Skeleton variant="text" width={100} height={12} />
-            <Skeleton variant="text" width={60} height={12} />
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

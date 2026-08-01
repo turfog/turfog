@@ -9,9 +9,17 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return request.cookies.getAll(); },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options: Record<string, unknown>;
+          }[]
+        ) {
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({ request });
@@ -23,62 +31,24 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const publicRoutes = [
-    "/auth/sign-in",
-    "/auth/sign-up",
-    "/auth/forgot-password",
-    "/auth/reset-password",
-    "/auth/verify-email",
-    "/auth/callback",
-  ];
+  const path = request.nextUrl.pathname;
+  const isAuthPage =
+    path.startsWith("/auth") || path === "/setup-username";
 
-  const isPublicRoute = publicRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  const isStaticAsset =
-    request.nextUrl.pathname.startsWith("/_next") ||
-    request.nextUrl.pathname.startsWith("/fonts") ||
-    request.nextUrl.pathname.startsWith("/api") ||
-    request.nextUrl.pathname.includes(".");
-
-  if (isStaticAsset) return supabaseResponse;
-
-  if (!user && !isPublicRoute && request.nextUrl.pathname !== "/") {
-    const signInUrl = new URL("/auth/sign-in", request.url);
-    signInUrl.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(signInUrl);
+  if (!user && !isAuthPage && path !== "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/sign-in";
+    return NextResponse.redirect(url);
   }
 
-  if (user && isPublicRoute) {
-    const { data: player } = await supabase
-      .from("players")
-      .select("username_set")
-      .eq("auth_id", user.id)
-      .single();
-
-    if (!player?.username_set) {
-      return NextResponse.redirect(new URL("/setup-username", request.url));
-    }
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  if (
-    user &&
-    !isPublicRoute &&
-    request.nextUrl.pathname !== "/setup-username"
-  ) {
-    const { data: player } = await supabase
-      .from("players")
-      .select("username_set")
-      .eq("auth_id", user.id)
-      .single();
-
-    if (!player?.username_set) {
-      return NextResponse.redirect(new URL("/setup-username", request.url));
-    }
+  if (user && isAuthPage) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
@@ -86,6 +56,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|logo.svg|og-image.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

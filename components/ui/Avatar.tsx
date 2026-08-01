@@ -1,107 +1,68 @@
-"use client";
-
-import React, { useState } from "react";
-import Image from "next/image";
-import { motion } from "framer-motion";
+import React from "react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/utils";
 
-// ----- Types -----
-
-type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 interface AvatarProps {
-  src?: string | null;
+  src?: string;
   alt: string;
   size?: AvatarSize;
-  isOnline?: boolean;
+  online?: boolean;
   className?: string;
-  onClick?: () => void;
 }
 
-// ----- Size Styles -----
-
-const sizeStyles: Record<AvatarSize, { container: string; font: string; dot: string }> = {
-  xs: { container: "w-6 h-6", font: "text-caption", dot: "w-1.5 h-1.5" },
-  sm: { container: "w-8 h-8", font: "text-body-xs", dot: "w-2 h-2" },
-  md: { container: "w-10 h-10", font: "text-body-sm", dot: "w-2.5 h-2.5" },
-  lg: { container: "w-12 h-12", font: "text-body-md", dot: "w-3 h-3" },
-  xl: { container: "w-16 h-16", font: "text-body-xl", dot: "w-3 h-3" },
-  "2xl": { container: "w-20 h-20", font: "text-display-xs", dot: "w-3.5 h-3.5" },
+const sizeStyles: Record<AvatarSize, string> = {
+  xs: "w-7 h-7 text-caption",
+  sm: "w-9 h-9 text-body-xs",
+  md: "w-11 h-11 text-body-sm",
+  lg: "w-14 h-14 text-body-md",
+  xl: "w-20 h-20 text-display-xs",
 };
 
-// ----- Component -----
+const dotStyles: Record<AvatarSize, string> = {
+  xs: "w-2 h-2",
+  sm: "w-2.5 h-2.5",
+  md: "w-3 h-3",
+  lg: "w-3.5 h-3.5",
+  xl: "w-4 h-4",
+};
 
 export default function Avatar({
   src,
   alt,
   size = "md",
-  isOnline = false,
-  className,
-  onClick,
+  online,
+  className = "",
 }: AvatarProps) {
-  const [hasError, setHasError] = useState(false);
-  const styles = sizeStyles[size];
-
-  const showImage = src && !hasError;
-  const initials = getInitials(alt);
-
-  const containerClasses = cn(
-    "relative rounded-full overflow-hidden",
-    "bg-neutral-200 flex items-center justify-center",
-    "border-2 border-white shadow-sm",
-    onClick && "cursor-pointer hover:shadow-md transition-shadow",
-    styles.container,
-    className
-  );
-
-  const imageContent = showImage ? (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      className="object-cover"
-      sizes={`${parseInt(styles.container.split("-")[1]) * 4}px`}
-      onError={() => setHasError(true)}
-      priority={size === "xl" || size === "2xl"}
-    />
-  ) : (
-    <span
-      className={cn(
-        "font-semibold text-neutral-500 select-none",
-        styles.font
-      )}
-    >
-      {initials}
-    </span>
-  );
-
   return (
-    <div className="relative inline-flex flex-shrink-0">
-      {onClick ? (
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={onClick}
-          type="button"
-          className={containerClasses}
-          aria-label={alt}
-        >
-          {imageContent}
-        </motion.button>
+    <div className={cn("relative inline-flex flex-shrink-0", className)}>
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          className={cn(
+            "rounded-full object-cover border border-neutral-200",
+            sizeStyles[size]
+          )}
+        />
       ) : (
-        <div className={containerClasses} aria-label={alt}>
-          {imageContent}
+        <div
+          className={cn(
+            "rounded-full bg-gradient-to-br from-electric-blue to-primary-green flex items-center justify-center text-white font-semibold",
+            sizeStyles[size]
+          )}
+        >
+          {getInitials(alt)}
         </div>
       )}
-
-      {/* Online Indicator */}
-      {isOnline && (
+      {online !== undefined && (
         <span
           className={cn(
-            "absolute bottom-0 right-0 rounded-full bg-emerald border-2 border-white",
-            styles.dot
+            "absolute bottom-0 right-0 rounded-full border-2 border-white",
+            dotStyles[size],
+            online ? "bg-emerald" : "bg-neutral-300"
           )}
-          aria-label="Online"
         />
       )}
     </div>

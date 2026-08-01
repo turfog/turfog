@@ -4,69 +4,68 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-// ----- Types -----
+type BadgeVariant =
+  | "default"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info"
+  | "premium";
 
-type BadgeVariant = "default" | "success" | "warning" | "danger" | "info" | "premium";
-type BadgeSize = "sm" | "md" | "lg";
+type BadgeSize = "sm" | "md";
 
 interface BadgeProps {
   children: React.ReactNode;
   variant?: BadgeVariant;
   size?: BadgeSize;
-  leftIcon?: React.ReactNode;
-  className?: string;
   animated?: boolean;
+  className?: string;
 }
 
-// ----- Variant Styles -----
-
 const variantStyles: Record<BadgeVariant, string> = {
-  default: "bg-neutral-100 text-neutral-700 border-neutral-200",
-  success: "bg-emerald/10 text-emerald border-emerald/20",
-  warning: "bg-amber/10 text-amber border-amber/20",
-  danger: "bg-coral/10 text-coral border-coral/20",
-  info: "bg-electric-blue/10 text-electric-blue border-electric-blue/20",
-  premium: "bg-gradient-to-r from-amber/10 to-sunset-orange/10 text-sunset-orange border-sunset-orange/20",
+  default: "bg-neutral-100 text-neutral-600",
+  success: "bg-emerald/10 text-emerald",
+  warning: "bg-amber/10 text-amber",
+  danger: "bg-coral/10 text-coral",
+  info: "bg-electric-blue/10 text-electric-blue",
+  premium: "bg-gradient-to-r from-amber/15 to-sunset-orange/15 text-sunset-orange",
 };
 
 const sizeStyles: Record<BadgeSize, string> = {
-  sm: "px-2 py-0.5 text-caption rounded-md gap-1",
-  md: "px-2.5 py-1 text-body-xs rounded-lg gap-1.5",
-  lg: "px-3 py-1.5 text-body-sm rounded-lg gap-1.5",
+  sm: "px-2 py-0.5 text-caption rounded-md",
+  md: "px-3 py-1 text-body-xs rounded-lg",
 };
-
-// ----- Component -----
 
 export default function Badge({
   children,
   variant = "default",
   size = "md",
-  leftIcon,
-  className,
-  animated = true,
+  animated = false,
+  className = "",
 }: BadgeProps) {
-  const Component = animated ? motion.span : "span";
-
-  const motionProps = animated
-    ? {
-        initial: { opacity: 0, scale: 0.9 },
-        animate: { opacity: 1, scale: 1 },
-        transition: { type: "spring", stiffness: 500, damping: 30 },
-      }
-    : {};
-
-  return (
-    <Component
+  const content = (
+    <span
       className={cn(
-        "inline-flex items-center font-medium border transition-colors duration-200",
+        "inline-flex items-center font-semibold whitespace-nowrap",
         variantStyles[variant],
         sizeStyles[size],
         className
       )}
-      {...motionProps}
     >
-      {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
       {children}
-    </Component>
+    </span>
   );
+
+  if (animated) {
+    return (
+      <motion.span
+        animate={{ scale: [1, 1.05, 1] }}
+        transition={{ repeat: Infinity, duration: 2 }}
+      >
+        {content}
+      </motion.span>
+    );
+  }
+
+  return content;
 }

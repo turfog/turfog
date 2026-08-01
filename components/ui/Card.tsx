@@ -1,51 +1,39 @@
-"use client";
-
 import React from "react";
-import { motion, type HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-// ----- Types -----
+type CardPadding = "sm" | "md" | "lg" | "none";
 
-interface CardProps extends HTMLMotionProps<"div"> {
+interface CardProps {
   children: React.ReactNode;
-  padding?: "none" | "sm" | "md" | "lg";
-  hover?: boolean;
+  padding?: CardPadding;
   className?: string;
+  onClick?: () => void;
 }
 
-// ----- Padding Styles -----
-
-const paddingStyles = {
+const paddingStyles: Record<CardPadding, string> = {
   none: "",
   sm: "p-3",
   md: "p-4",
   lg: "p-6",
 };
 
-// ----- Component -----
-
 export default function Card({
   children,
   padding = "md",
-  hover = true,
-  className,
-  ...props
+  className = "",
+  onClick,
 }: CardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      whileHover={hover ? { y: -2 } : undefined}
+    <div
+      onClick={onClick}
       className={cn(
-        "card-base",
+        "bg-white rounded-2xl border border-neutral-200 shadow-card transition-all duration-200",
+        onClick && "cursor-pointer hover:shadow-card-hover",
         paddingStyles[padding],
-        hover && "cursor-pointer",
         className
       )}
-      {...props}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

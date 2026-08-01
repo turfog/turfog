@@ -3,209 +3,101 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { SPORTS, SKILL_LEVELS, HEARTBEAT_DURATION_MINUTES } from "@/lib/constants";
-import type { Player } from "@/types/database";
-import type { SportId, SkillLevelId } from "@/types/heartbeat";
-import { useHeartbeat } from "@/hooks/useHeartbeat";
-import { useLocation } from "@/hooks/useLocation";
+import { SPORTS, SKILL_LEVELS } from "@/lib/constants";
+import type { SportId } from "@/types";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
 import {
   RunIcon,
   MapPinIcon,
-  XIcon,
-  CheckCircleIcon,
-  ChevronRightIcon,
+  ZapIcon,
   FootballIcon,
   CricketIcon,
-  BasketballIcon,
+  PickleballIcon,
+  PadelIcon,
   BadmintonIcon,
 } from "@/components/SvgIcons";
-import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
-import Avatar from "@/components/ui/Avatar";
 
-// ----- Types -----
-
-interface IWantToPlayProps {
-  player: Player;
-}
-
-interface SportOption {
-  id: SportId;
-  name: string;
-  icon: React.ReactNode;
-}
-
-// ----- Sport Options with Icons -----
-
-const sportOptions: SportOption[] = [
-  { id: "football", name: "Football", icon: <FootballIcon size={20} /> },
-  { id: "cricket", name: "Cricket", icon: <CricketIcon size={20} /> },
-  { id: "basketball", name: "Basketball", icon: <BasketballIcon size={20} /> },
-  { id: "badminton", name: "Badminton", icon: <BadmintonIcon size={20} /> },
-  { id: "tennis", name: "Tennis", icon: <RunIcon size={20} /> },
-  { id: "volleyball", name: "Volleyball", icon: <RunIcon size={20} /> },
-  { id: "table-tennis", name: "Table tennis", icon: <RunIcon size={20} /> },
-  { id: "hockey", name: "Hockey", icon: <RunIcon size={20} /> },
-];
-
-// ----- Animation Variants -----
-
-const cardVariants = {
-  collapsed: {
-    height: "auto",
-    transition: { duration: 0.3, ease: "easeInOut" },
-  },
-  expanded: {
-    height: "auto",
-    transition: { duration: 0.3, ease: "easeInOut" },
-  },
+const sportIconMap: Record<SportId, React.ReactNode> = {
+  football: <FootballIcon size={18} />,
+  "box-cricket": <CricketIcon size={18} />,
+  pickleball: <PickleballIcon size={18} />,
+  padel: <PadelIcon size={18} />,
+  badminton: <BadmintonIcon size={18} />,
 };
 
-const contentVariants = {
-  hidden: { opacity: 0, height: 0, overflow: "hidden" },
-  visible: {
-    opacity: 1,
-    height: "auto",
-    transition: {
-      duration: 0.3,
-      ease: "easeOut",
-      staggerChildren: 0.04,
-    },
-  },
-  exit: {
-    opacity: 0,
-    height: 0,
-    transition: { duration: 0.2, ease: "easeIn" },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0 },
-};
-
-// ----- Component -----
-
-export default function IWantToPlay({ player }: IWantToPlayProps) {
+export default function IWantToPlay() {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedSports, setSelectedSports] = useState<SportId[]>([]);
-  const [skillLevel, setSkillLevel] = useState<SkillLevelId>("intermediate");
+  const [selectedSport, setSelectedSport] = useState<SportId | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [isLive, setIsLive] = useState(false);
 
-  const { activeHeartbeat, isSubmitting, submitHeartbeat, cancelHeartbeat } =
-    useHeartbeat();
-  const { location } = useLocation();
-
-  const hasActiveHeartbeat = activeHeartbeat?.type === "i-want-to-play";
-
-  const toggleSport = (sportId: SportId) => {
-    setSelectedSports((prev) =>
-      prev.includes(sportId)
-        ? prev.filter((id) => id !== sportId)
-        : [...prev, sportId]
-    );
+  const handleGoLive = () => {
+    if (!selectedSport || !selectedSkill) return;
+    setIsLive(true);
   };
 
-  const handleSubmit = async () => {
-    if (selectedSports.length === 0) return;
-
-    await submitHeartbeat({
-      type: "i-want-to-play",
-      sports: selectedSports,
-      skillLevel,
-      note,
-    });
-
-    setIsExpanded(false);
-  };
-
-  const handleCancel = () => {
-    cancelHeartbeat();
-    setSelectedSports([]);
-    setNote("");
-  };
-
-  // Active heartbeat state
-  if (hasActiveHeartbeat) {
+  if (isLive) {
     return (
-      <motion.div
-        layout
-        className="bg-electric-blue text-white rounded-2xl shadow-lg shadow-electric-blue/20 overflow-hidden"
-      >
-        <div className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"
-            >
-              <RunIcon size={22} />
-            </motion.div>
-            <div className="flex-1">
-              <p className="text-body-sm font-semibold">You are live now</p>
-              <p className="text-body-xs text-white/70">
-                Captains nearby can see you
-              </p>
-            </div>
-            <Badge variant="success" size="sm" animated>
-              Active
-            </Badge>
-          </div>
-
-          {/* Sports Tags */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {activeHeartbeat.sports.map((sportId) => (
-              <span
-                key={sportId}
-                className="px-2.5 py-1 bg-white/15 rounded-lg text-body-xs font-medium"
-              >
-                {sportOptions.find((s) => s.id === sportId)?.name || sportId}
-              </span>
-            ))}
-          </div>
-
-          {/* Location & Timer */}
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-body-xs text-white/70">
-              <MapPinIcon size={12} />
-              {location?.city || "Nearby"}
-            </span>
-            <span className="text-body-xs text-white/70">
-              Expires in {HEARTBEAT_DURATION_MINUTES} min
-            </span>
-          </div>
-
-          {/* Cancel Button */}
-          <button
-            onClick={handleCancel}
-            className="mt-3 w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-body-xs font-medium transition-colors"
+      <Card className="border-electric-blue/30 bg-gradient-to-br from-electric-blue/5 to-white overflow-hidden">
+        <div className="text-center py-4">
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="inline-flex items-center justify-center w-14 h-14 bg-electric-blue/10 rounded-2xl mb-3"
           >
-            End session
-          </button>
+            <RunIcon size={28} className="text-electric-blue" />
+          </motion.div>
+          <h3 className="text-body-md font-semibold text-neutral-900 mb-1">
+            You are live
+          </h3>
+          <p className="text-body-xs text-neutral-500 mb-3">
+            Nearby captains can see you now
+          </p>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-electric-blue/10 text-electric-blue text-caption font-semibold rounded-full">
+              <span className="w-1.5 h-1.5 bg-electric-blue rounded-full animate-pulse-soft" />
+              Live
+            </span>
+            <span className="px-2.5 py-1 bg-neutral-100 text-neutral-600 text-caption font-medium rounded-full capitalize">
+              {selectedSport}
+            </span>
+            <span className="px-2.5 py-1 bg-neutral-100 text-neutral-600 text-caption font-medium rounded-full capitalize">
+              {selectedSkill}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setIsLive(false);
+              setIsExpanded(false);
+              setSelectedSport(null);
+              setSelectedSkill(null);
+              setNote("");
+            }}
+          >
+            Go offline
+          </Button>
         </div>
-
-        {/* Pulse Animation */}
-        <motion.div
-          className="h-0.5 bg-white/30"
-          animate={{ scaleX: [1, 0, 1] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          style={{ transformOrigin: "left" }}
-        />
-      </motion.div>
+      </Card>
     );
   }
 
   return (
-    <motion.div
-      layout
-      className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden"
+    <Card
+      className={cn(
+        "transition-all duration-300 cursor-pointer group",
+        isExpanded
+          ? "border-electric-blue/40 shadow-glow-blue"
+          : "hover:border-electric-blue/20"
+      )}
+      onClick={() => !isExpanded && setIsExpanded(true)}
     >
-      {/* Header - Always visible */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 flex items-center gap-3 hover:bg-neutral-50/50 transition-colors text-left"
-      >
-        <div className="w-10 h-10 bg-electric-blue/10 rounded-xl flex items-center justify-center flex-shrink-0">
+      {/* Collapsed Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 bg-electric-blue/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-electric-blue/15 transition-colors">
           <RunIcon size={22} className="text-electric-blue" />
         </div>
         <div className="flex-1 min-w-0">
@@ -213,129 +105,119 @@ export default function IWantToPlay({ player }: IWantToPlayProps) {
             I want to play
           </h3>
           <p className="text-body-xs text-neutral-500">
-            Go live so nearby captains can discover you
+            Go live, get discovered nearby
           </p>
         </div>
-        <motion.div
-          animate={{ rotate: isExpanded ? 90 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="text-neutral-400"
-        >
-          <ChevronRightIcon size={20} />
-        </motion.div>
-      </button>
+        <ZapIcon
+          size={18}
+          className={cn(
+            "text-neutral-300 transition-colors",
+            isExpanded ? "text-electric-blue" : "group-hover:text-electric-blue"
+          )}
+        />
+      </div>
 
-      {/* Expandable Content */}
+      {/* Expanded Form */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            variants={contentVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-4">
+            <div className="pt-4 mt-4 border-t border-neutral-100 space-y-4">
               {/* Sport Selection */}
-              <motion.div variants={itemVariants}>
-                <label className="block text-body-xs font-medium text-neutral-600 mb-2">
-                  Select sports you want to play
+              <div>
+                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">
+                  Select sport
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {sportOptions.map((sport) => {
-                    const isSelected = selectedSports.includes(sport.id);
-                    return (
-                      <motion.button
-                        key={sport.id}
-                        whileTap={{ scale: 0.94 }}
-                        onClick={() => toggleSport(sport.id)}
-                        className={cn(
-                          "flex items-center gap-1.5 px-3 py-2 rounded-lg text-body-xs font-medium transition-all duration-200 border",
-                          isSelected
-                            ? "bg-electric-blue text-white border-electric-blue shadow-sm"
-                            : "bg-neutral-50 text-neutral-600 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            isSelected ? "text-white" : "text-neutral-400"
-                          )}
-                        >
-                          {sport.icon}
-                        </span>
-                        {sport.name}
-                      </motion.button>
-                    );
-                  })}
+                  {SPORTS.map((sport) => (
+                    <motion.button
+                      key={sport.id}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSport(sport.id);
+                      }}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-2 rounded-xl text-body-xs font-medium border transition-all",
+                        selectedSport === sport.id
+                          ? "bg-electric-blue text-white border-electric-blue"
+                          : "bg-white text-neutral-600 border-neutral-200 hover:border-electric-blue/40"
+                      )}
+                    >
+                      {sportIconMap[sport.id]}
+                      {sport.name}
+                    </motion.button>
+                  ))}
                 </div>
-              </motion.div>
+              </div>
 
               {/* Skill Level */}
-              <motion.div variants={itemVariants}>
-                <label className="block text-body-xs font-medium text-neutral-600 mb-2">
-                  Your skill level
+              <div>
+                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">
+                  Skill level
                 </label>
                 <div className="flex gap-2">
                   {SKILL_LEVELS.map((level) => (
                     <motion.button
-                      key={level.id}
+                      key={level}
                       whileTap={{ scale: 0.94 }}
-                      onClick={() => setSkillLevel(level.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSkill(level);
+                      }}
                       className={cn(
-                        "flex-1 py-2 rounded-lg text-body-xs font-medium transition-all duration-200 border",
-                        skillLevel === level.id
+                        "flex-1 px-3 py-2 rounded-xl text-body-xs font-medium border capitalize transition-all",
+                        selectedSkill === level
                           ? "bg-electric-blue text-white border-electric-blue"
-                          : "bg-neutral-50 text-neutral-600 border-neutral-200 hover:border-neutral-300"
+                          : "bg-white text-neutral-600 border-neutral-200 hover:border-electric-blue/40"
                       )}
                     >
-                      {level.name}
+                      {level}
                     </motion.button>
                   ))}
                 </div>
-              </motion.div>
+              </div>
 
               {/* Note */}
-              <motion.div variants={itemVariants}>
-                <label className="block text-body-xs font-medium text-neutral-600 mb-2">
-                  Add a note (optional)
+              <div>
+                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">
+                  Note (optional)
                 </label>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="e.g., Available after 6 PM, prefer turf ground..."
+                  onClick={(e) => e.stopPropagation()}
+                  placeholder="Available after 6 PM. Prefer 5v5."
                   rows={2}
-                  maxLength={200}
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 text-body-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/10 transition-all resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/20 resize-none transition-all"
                 />
-              </motion.div>
+              </div>
 
               {/* Location */}
-              <motion.div
-                variants={itemVariants}
-                className="flex items-center gap-2 text-body-xs text-neutral-500"
-              >
-                <MapPinIcon size={14} />
-                Going live in {location?.city || "your area"} &middot; Visible
-                for {HEARTBEAT_DURATION_MINUTES} minutes
-              </motion.div>
+              <div className="flex items-center gap-1.5 text-body-xs text-neutral-400">
+                <MapPinIcon size={13} />
+                <span>Andheri west, Mumbai</span>
+              </div>
 
-              {/* Submit */}
-              <motion.div variants={itemVariants}>
-                <Button
-                  onClick={handleSubmit}
-                  theme="blue"
-                  size="lg"
-                  fullWidth
-                  isLoading={isSubmitting}
-                  disabled={selectedSports.length === 0}
-                  leftIcon={<RunIcon size={20} />}
-                >
-                  Go live now
-                </Button>
-              </motion.div>
+              {/* Go Live Button */}
+              <Button
+                variant="secondary"
+                fullWidth
+                disabled={!selectedSport || !selectedSkill}
+                onClick={handleGoLive}
+              >
+                <RunIcon size={16} />
+                Go live now
+              </Button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </Card>
   );
 }
