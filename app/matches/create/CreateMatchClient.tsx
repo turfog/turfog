@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { SPORTS, SKILL_LEVELS, ROUTES } from "@/lib/constants";
+import { SKILL_LEVELS, ROUTES } from "@/lib/constants";
 import type { SportId, SkillLevelId } from "@/types/heartbeat";
 import {
   ChevronLeftIcon,
@@ -15,10 +15,8 @@ import {
   RunIcon,
   MapPinIcon,
   ClockIcon,
-  UsersIcon,
   PlusIcon,
   MinusIcon,
-  InfoIcon,
 } from "@/components/SvgIcons";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Privacy policy | Turfog",

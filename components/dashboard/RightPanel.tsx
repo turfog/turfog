@@ -1,24 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { timeAgo, truncateText } from "@/lib/utils";
-import { SPORTS, SKILL_LEVELS } from "@/lib/constants";
-import type { NearbyPlayer, TrendingItem } from "@/types/feed";
+import type { TrendingItem } from "@/types/feed";
 import {
   MapPinIcon,
   UsersIcon,
   RunIcon,
-  ChevronRightIcon,
-  TrendingIcon,
-  FireIcon,
 } from "@/components/SvgIcons";
-import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
-
-// ----- Types -----
 
 interface RightPanelProps {
   className?: string;
@@ -36,8 +27,6 @@ interface LiveOpportunity {
   timeAgo: string;
   note: string;
 }
-
-// ----- Mock Data -----
 
 const mockOpportunities: LiveOpportunity[] = [
   {
@@ -111,36 +100,26 @@ const mockTrending: TrendingItem[] = [
   },
 ];
 
-// ----- Component -----
-
 export default function RightPanel({ className }: RightPanelProps) {
-  const [activeTab, setActiveTab] = useState<"opportunities" | "trending">(
-    "opportunities"
-  );
+  const [activeTab, setActiveTab] = useState<"opportunities" | "trending">("opportunities");
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Header */}
       <div className="px-4 py-4 border-b border-neutral-100">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-body-sm font-semibold text-neutral-900">
-            Live activity
-          </h2>
+          <h2 className="text-body-sm font-semibold text-neutral-900">Live activity</h2>
           <span className="flex items-center gap-1.5 text-body-xs text-emerald font-medium">
             <span className="w-1.5 h-1.5 bg-emerald rounded-full animate-pulse-soft" />
             24 active now
           </span>
         </div>
 
-        {/* Tab Toggle */}
         <div className="flex bg-neutral-100 rounded-lg p-0.5">
           <button
             onClick={() => setActiveTab("opportunities")}
             className={cn(
               "flex-1 py-1.5 text-body-xs font-medium rounded-md transition-all duration-200",
-              activeTab === "opportunities"
-                ? "bg-white text-neutral-900 shadow-sm"
-                : "text-neutral-500 hover:text-neutral-700"
+              activeTab === "opportunities" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
             )}
           >
             Opportunities
@@ -149,9 +128,7 @@ export default function RightPanel({ className }: RightPanelProps) {
             onClick={() => setActiveTab("trending")}
             className={cn(
               "flex-1 py-1.5 text-body-xs font-medium rounded-md transition-all duration-200",
-              activeTab === "trending"
-                ? "bg-white text-neutral-900 shadow-sm"
-                : "text-neutral-500 hover:text-neutral-700"
+              activeTab === "trending" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
             )}
           >
             Trending
@@ -159,35 +136,16 @@ export default function RightPanel({ className }: RightPanelProps) {
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
           {activeTab === "opportunities" ? (
-            <motion.div
-              key="opportunities"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="divide-y divide-neutral-100"
-            >
+            <motion.div key="opportunities" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }} className="divide-y divide-neutral-100">
               {mockOpportunities.map((opportunity, index) => (
-                <OpportunityCard
-                  key={opportunity.id}
-                  opportunity={opportunity}
-                  delay={index * 0.05}
-                />
+                <OpportunityCard key={opportunity.id} opportunity={opportunity} delay={index * 0.05} />
               ))}
             </motion.div>
           ) : (
-            <motion.div
-              key="trending"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="p-4 space-y-3"
-            >
+            <motion.div key="trending" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }} className="p-4 space-y-3">
               {mockTrending.map((item, index) => (
                 <TrendingCard key={item.id} item={item} delay={index * 0.05} />
               ))}
@@ -199,15 +157,7 @@ export default function RightPanel({ className }: RightPanelProps) {
   );
 }
 
-// ----- Opportunity Card -----
-
-function OpportunityCard({
-  opportunity,
-  delay,
-}: {
-  opportunity: LiveOpportunity;
-  delay: number;
-}) {
+function OpportunityCard({ opportunity, delay }: { opportunity: LiveOpportunity; delay: number }) {
   const isIWantToPlay = opportunity.type === "i-want-to-play";
 
   return (
@@ -219,40 +169,22 @@ function OpportunityCard({
       className="p-4 cursor-pointer"
     >
       <div className="flex items-start gap-3">
-        {/* Type Indicator */}
-        <div
-          className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-            isIWantToPlay
-              ? "bg-electric-blue/10 text-electric-blue"
-              : "bg-sunset-orange/10 text-sunset-orange"
-          )}
-        >
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+          isIWantToPlay ? "bg-electric-blue/10 text-electric-blue" : "bg-sunset-orange/10 text-sunset-orange"
+        )}>
           {isIWantToPlay ? <RunIcon size={20} /> : <UsersIcon size={20} />}
         </div>
-
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-body-sm font-semibold text-neutral-900 truncate">
-              {opportunity.playerName}
-            </span>
-            <Badge
-              variant={isIWantToPlay ? "info" : "warning"}
-              size="sm"
-              animated={false}
-            >
+            <span className="text-body-sm font-semibold text-neutral-900 truncate">{opportunity.playerName}</span>
+            <Badge variant={isIWantToPlay ? "info" : "warning"} size="sm" animated={false}>
               {isIWantToPlay ? "Want to play" : "Need player"}
             </Badge>
           </div>
-          <p className="text-body-xs text-neutral-500 mb-1.5 line-clamp-2">
-            {opportunity.note}
-          </p>
+          <p className="text-body-xs text-neutral-500 mb-1.5 line-clamp-2">{opportunity.note}</p>
           <div className="flex items-center gap-3 text-body-xs text-neutral-400">
-            <span className="flex items-center gap-1">
-              <MapPinIcon size={12} />
-              {opportunity.location}
-            </span>
+            <span className="flex items-center gap-1"><MapPinIcon size={12} />{opportunity.location}</span>
             <span>{opportunity.timeAgo}</span>
           </div>
         </div>
@@ -260,8 +192,6 @@ function OpportunityCard({
     </motion.div>
   );
 }
-
-// ----- Trending Card -----
 
 function TrendingCard({ item, delay }: { item: TrendingItem; delay: number }) {
   return (
@@ -275,56 +205,17 @@ function TrendingCard({ item, delay }: { item: TrendingItem; delay: number }) {
         <FireIcon size={20} className="text-coral" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-body-sm font-semibold text-neutral-900 truncate">
-          {item.title}
-        </p>
-        <p className="text-body-xs text-neutral-500">
-          {item.subtitle} &middot; {item.participantCount} players
-        </p>
+        <p className="text-body-sm font-semibold text-neutral-900 truncate">{item.title}</p>
+        <p className="text-body-xs text-neutral-500">{item.subtitle} &middot; {item.participantCount} players</p>
       </div>
-      <div className="text-body-xs font-semibold text-coral">
-        {item.hotScore}%
-      </div>
+      <div className="text-body-xs font-semibold text-coral">{item.hotScore}%</div>
     </motion.div>
-  );
-}
-
-// ----- Additional Icons -----
-
-function TrendingIcon({ size = 24, className = "" }: { size?: number; className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-      <polyline points="17 6 23 6 23 12" />
-    </svg>
   );
 }
 
 function FireIcon({ size = 24, className = "" }: { size?: number; className?: string }) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
     </svg>
   );

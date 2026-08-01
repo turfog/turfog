@@ -192,184 +192,59 @@ export default function AuthLandingPage() {
         variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
         className="relative w-full max-w-md mx-4 bg-white/20 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 p-6 sm:p-8"
       >
-        {/* Logo */}
         <motion.div variants={fadeUp} className="flex flex-col items-center mb-6">
           <div className="w-20 h-20 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg mb-4 p-2">
-            <Image
-              src="/images/logo.png"
-              alt="Turfog"
-              width={64}
-              height={64}
-              className="object-contain"
-              priority
-            />
+            <Image src="/images/logo.png" alt="Turfog" width={64} height={64} className="object-contain" priority />
           </div>
           <h1 className="font-display text-3xl font-bold text-white drop-shadow-lg">Turfog</h1>
           <p className="text-white/70 text-sm mt-1">Never cancel a match again</p>
         </motion.div>
 
-        {/* Tabs */}
         <motion.div variants={fadeUp} className="flex bg-white/10 rounded-xl p-1 mb-6">
-          <button
-            onClick={() => setActiveTab("signin")}
-            className={cn(
-              "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300",
-              activeTab === "signin" ? "bg-white/20 text-white shadow" : "text-white/60 hover:text-white/80"
-            )}
-          >
-            Sign in
-          </button>
-          <button
-            onClick={() => setActiveTab("signup")}
-            className={cn(
-              "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300",
-              activeTab === "signup" ? "bg-white/20 text-white shadow" : "text-white/60 hover:text-white/80"
-            )}
-          >
-            Sign up
-          </button>
+          <button onClick={() => setActiveTab("signin")} className={cn("flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300", activeTab === "signin" ? "bg-white/20 text-white shadow" : "text-white/60 hover:text-white/80")}>Sign in</button>
+          <button onClick={() => setActiveTab("signup")} className={cn("flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300", activeTab === "signup" ? "bg-white/20 text-white shadow" : "text-white/60 hover:text-white/80")}>Sign up</button>
         </motion.div>
 
         <AnimatePresence mode="wait">
           {activeTab === "signin" ? (
-            <motion.form
-              key="signin"
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0, y: -10 }}
-              onSubmit={handleSignIn}
-              className="space-y-4"
-            >
+            <motion.form key="signin" variants={fadeUp} initial="hidden" animate="visible" exit={{ opacity: 0, y: -10 }} onSubmit={handleSignIn} className="space-y-4">
               {signInServerError && (
-                <div className="flex items-center gap-2 bg-red-500/20 text-white p-3 rounded-xl text-sm">
-                  <AlertCircleIcon size={18} />
-                  {signInServerError}
-                </div>
+                <div className="flex items-center gap-2 bg-red-500/20 text-white p-3 rounded-xl text-sm"><AlertCircleIcon size={18} />{signInServerError}</div>
               )}
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={signInData.email}
-                onChange={(e) => { setSignInData(p => ({...p, email: e.target.value})); setSignInErrors(p => ({...p, email: undefined})); }}
-                error={signInErrors.email}
-                leftIcon={<MailIcon size={18} />}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={signInData.password}
-                onChange={(e) => { setSignInData(p => ({...p, password: e.target.value})); setSignInErrors(p => ({...p, password: undefined})); }}
-                error={signInErrors.password}
-                leftIcon={<LockIcon size={18} />}
-                rightIcon={
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-white/60 hover:text-white">
-                    {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
-                  </button>
-                }
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-              <div className="flex justify-end">
-                <Link href={ROUTES.FORGOT_PASSWORD} className="text-white/70 text-sm hover:text-white">Forgot password?</Link>
-              </div>
-              <Button type="submit" theme="green" size="lg" fullWidth isLoading={signInLoading}>
-                Sign in
-              </Button>
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20" /></div>
-                <div className="relative flex justify-center text-xs"><span className="px-2 text-white/50 bg-transparent">or</span></div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                theme="neutral"
-                size="lg"
-                fullWidth
-                leftIcon={<GoogleIcon size={20} />}
-                onClick={handleGoogleAuth}
-              >
-                Continue with Google
-              </Button>
+              <Input type="email" placeholder="Email address" value={signInData.email} onChange={(e) => { setSignInData(p => ({...p, email: e.target.value})); setSignInErrors(p => ({...p, email: undefined})); }} error={signInErrors.email} leftIcon={<MailIcon size={18} />} className="bg-white/10 border-white/20 text-white placeholder:text-white/50" />
+              <Input type={showPassword ? "text" : "password"} placeholder="Password" value={signInData.password} onChange={(e) => { setSignInData(p => ({...p, password: e.target.value})); setSignInErrors(p => ({...p, password: undefined})); }} error={signInErrors.password} leftIcon={<LockIcon size={18} />} rightIcon={<button type="button" onClick={() => setShowPassword(!showPassword)} className="text-white/60 hover:text-white">{showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}</button>} className="bg-white/10 border-white/20 text-white placeholder:text-white/50" />
+              <div className="flex justify-end"><Link href={ROUTES.FORGOT_PASSWORD} className="text-white/70 text-sm hover:text-white">Forgot password?</Link></div>
+              <Button type="submit" theme="green" size="lg" fullWidth isLoading={signInLoading}>Sign in</Button>
+              <div className="relative my-4"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20" /></div><div className="relative flex justify-center text-xs"><span className="px-2 text-white/50 bg-transparent">or</span></div></div>
+              <Button type="button" variant="outline" theme="neutral" size="lg" fullWidth leftIcon={<GoogleIcon size={20} />} onClick={handleGoogleAuth}>Continue with Google</Button>
             </motion.form>
           ) : (
-            <motion.form
-              key="signup"
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0, y: -10 }}
-              onSubmit={handleSignUp}
-              className="space-y-4"
-            >
+            <motion.form key="signup" variants={fadeUp} initial="hidden" animate="visible" exit={{ opacity: 0, y: -10 }} onSubmit={handleSignUp} className="space-y-4">
               {signUpServerError && (
-                <div className="flex items-center gap-2 bg-red-500/20 text-white p-3 rounded-xl text-sm">
-                  <AlertCircleIcon size={18} />
-                  {signUpServerError}
-                </div>
+                <div className="flex items-center gap-2 bg-red-500/20 text-white p-3 rounded-xl text-sm"><AlertCircleIcon size={18} />{signUpServerError}</div>
               )}
-              <Input
-                type="text"
-                placeholder="Full name"
-                value={signUpData.fullName}
-                onChange={(e) => { setSignUpData(p => ({...p, fullName: e.target.value})); setSignUpErrors(p => ({...p, fullName: undefined})); }}
-                error={signUpErrors.fullName}
-                leftIcon={<ProfileIcon size={18} />}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={signUpData.email}
-                onChange={(e) => { setSignUpData(p => ({...p, email: e.target.value})); setSignUpErrors(p => ({...p, email: undefined})); }}
-                error={signUpErrors.email}
-                leftIcon={<MailIcon size={18} />}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={signUpData.password}
-                onChange={(e) => { setSignUpData(p => ({...p, password: e.target.value})); setSignUpErrors(p => ({...p, password: undefined})); }}
-                error={signUpErrors.password}
-                leftIcon={<LockIcon size={18} />}
-                hint="Min. 8 chars, upper, lower, number"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-              <Input
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm password"
-                value={signUpData.confirmPassword}
-                onChange={(e) => { setSignUpData(p => ({...p, confirmPassword: e.target.value})); setSignUpErrors(p => ({...p, confirmPassword: undefined})); }}
-                error={signUpErrors.confirmPassword}
-                leftIcon={<LockIcon size={18} />}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-              <p className="text-white/50 text-xs">
-                By signing up, you agree to our <Link href="#" className="underline">Terms</Link> and <Link href="#" className="underline">Privacy Policy</Link>.
-              </p>
-              <Button type="submit" theme="orange" size="lg" fullWidth isLoading={signUpLoading}>
-                Create account
-              </Button>
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20" /></div>
-                <div className="relative flex justify-center text-xs"><span className="px-2 text-white/50 bg-transparent">or</span></div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                theme="neutral"
-                size="lg"
-                fullWidth
-                leftIcon={<GoogleIcon size={20} />}
-                onClick={handleGoogleAuth}
-              >
-                Continue with Google
-              </Button>
+              <Input type="text" placeholder="Full name" value={signUpData.fullName} onChange={(e) => { setSignUpData(p => ({...p, fullName: e.target.value})); setSignUpErrors(p => ({...p, fullName: undefined})); }} error={signUpErrors.fullName} leftIcon={<ProfileIcon size={18} />} className="bg-white/10 border-white/20 text-white placeholder:text-white/50" />
+              <Input type="email" placeholder="Email address" value={signUpData.email} onChange={(e) => { setSignUpData(p => ({...p, email: e.target.value})); setSignUpErrors(p => ({...p, email: undefined})); }} error={signUpErrors.email} leftIcon={<MailIcon size={18} />} className="bg-white/10 border-white/20 text-white placeholder:text-white/50" />
+              <Input type={showPassword ? "text" : "password"} placeholder="Password" value={signUpData.password} onChange={(e) => { setSignUpData(p => ({...p, password: e.target.value})); setSignUpErrors(p => ({...p, password: undefined})); }} error={signUpErrors.password} leftIcon={<LockIcon size={18} />} rightIcon={<button type="button" onClick={() => setShowPassword(!showPassword)} className="text-white/60 hover:text-white">{showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}</button>} hint="Min. 8 chars, upper, lower, number" className="bg-white/10 border-white/20 text-white placeholder:text-white/50" />
+              <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm password" value={signUpData.confirmPassword} onChange={(e) => { setSignUpData(p => ({...p, confirmPassword: e.target.value})); setSignUpErrors(p => ({...p, confirmPassword: undefined})); }} error={signUpErrors.confirmPassword} leftIcon={<LockIcon size={18} />} rightIcon={<button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="text-white/60 hover:text-white">{showConfirmPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}</button>} className="bg-white/10 border-white/20 text-white placeholder:text-white/50" />
+              <p className="text-white/50 text-xs">By signing up, you agree to our <Link href="/terms" className="underline hover:text-white/80">Terms</Link> and <Link href="/privacy" className="underline hover:text-white/80">Privacy policy</Link>.</p>
+              <Button type="submit" theme="orange" size="lg" fullWidth isLoading={signUpLoading}>Create account</Button>
+              <div className="relative my-4"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/20" /></div><div className="relative flex justify-center text-xs"><span className="px-2 text-white/50 bg-transparent">or</span></div></div>
+              <Button type="button" variant="outline" theme="neutral" size="lg" fullWidth leftIcon={<GoogleIcon size={20} />} onClick={handleGoogleAuth}>Continue with Google</Button>
             </motion.form>
           )}
         </AnimatePresence>
       </motion.div>
+
+      <div className="absolute bottom-4 left-0 right-0 text-center">
+        <div className="flex items-center justify-center gap-4 text-white/50 text-xs">
+          <Link href="/privacy" className="hover:text-white/80 transition-colors">Privacy policy</Link>
+          <span className="text-white/30">|</span>
+          <Link href="/terms" className="hover:text-white/80 transition-colors">Terms of service</Link>
+          <span className="text-white/30">|</span>
+          <span>&copy; {new Date().getFullYear()} Turfog</span>
+        </div>
+      </div>
     </div>
   );
 }

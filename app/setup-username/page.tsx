@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { usernameSchema, type UsernameInput } from "@/lib/validators";
+import { usernameSchema } from "@/lib/validators";
 import { ROUTES, API_ROUTES } from "@/lib/constants";
 import { CheckCircleIcon, XCircleIcon, AlertCircleIcon, ProfileIcon } from "@/components/SvgIcons";
 import Button from "@/components/ui/Button";
@@ -136,15 +136,15 @@ export default function SetupUsernamePage() {
         return;
       }
 
-      // Update player profile with username
-      const { error: updateError } = await supabase
-        .from("players")
-        .update({
-          username: username.toLowerCase().trim(),
-          username_set: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("auth_id", user.id);
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { error: updateError } = await (supabase
+  .from("players") as any)
+  .update({
+    username: username.toLowerCase().trim(),
+    username_set: true,
+    updated_at: new Date().toISOString(),
+  })
+  .eq("auth_id", user.id);
 
       if (updateError) {
         if (updateError.code === "23505") {
