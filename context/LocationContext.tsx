@@ -21,6 +21,15 @@ interface LocationState {
   setRadius: (n: number) => void;
 }
 
+const DEFAULT_STATE: LocationState = {
+  lat: null,
+  lng: null,
+  label: "Detecting your location...",
+  status: "idle",
+  radius: 5,
+  setRadius: () => {},
+};
+
 const LocationContext = createContext<LocationState | null>(null);
 
 export function LocationProvider({ children }: { children: ReactNode }) {
@@ -77,18 +86,12 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <LocationContext.Provider
-      value={{ lat, lng, label, status, radius, setRadius }}
-    >
+    <LocationContext.Provider value={{ lat, lng, label, status, radius, setRadius }}>
       {children}
     </LocationContext.Provider>
   );
 }
 
 export function useLocation(): LocationState {
-  const ctx = useContext(LocationContext);
-  if (!ctx) {
-    throw new Error("useLocation must be used within LocationProvider");
-  }
-  return ctx;
+  return useContext(LocationContext) ?? DEFAULT_STATE;
 }

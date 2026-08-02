@@ -13,6 +13,31 @@ import {
 import type { MatchRequestRow } from "@/lib/discovery";
 import type { PlayerRequest, SportId, MatchType } from "@/types";
 
+const SPORTS_SET = new Set<SportId>([
+  "football",
+  "box-cricket",
+  "pickleball",
+  "padel",
+  "badminton",
+]);
+const MATCH_TYPES_SET = new Set<MatchType>([
+  "casual",
+  "practice",
+  "competitive",
+  "tournament",
+]);
+const SKILLS_SET = new Set(["beginner", "intermediate", "advanced", "any"]);
+
+function safeSport(v: string | null | undefined): SportId {
+  return v && SPORTS_SET.has(v as SportId) ? (v as SportId) : "football";
+}
+function safeMatchType(v: string | null | undefined): MatchType {
+  return v && MATCH_TYPES_SET.has(v as MatchType) ? (v as MatchType) : "casual";
+}
+function safeSkill(v: string | null | undefined): PlayerRequest["skill"] {
+  return v && SKILLS_SET.has(v) ? (v as PlayerRequest["skill"]) : "any";
+}
+
 export function useMatchRequests() {
   const { lat, lng, radius } = useLocation();
   const [rows, setRows] = useState<MatchRequestRow[]>([]);
@@ -21,10 +46,13 @@ export function useMatchRequests() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const [r, m] = await Promise.all([fetchActiveRequests(), fetchMyParticipants()]);
-    setRows(r);
-    setMyActions(m);
-    setLoading(false);
+    try {
+      const [r, m] = await Promise.all([fetchActiveRequests(), fetchMyParticipants()]);
+      setRows(r);
+      setMyActions(m);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -43,20 +71,20 @@ export function useMatchRequests() {
             : 0;
         return {
           id: r.id,
-          organizerName: r.organizer_name,
-          organizerUsername: r.organizer_username,
-          organizerAvatar: r.organizer_avatar,
-          verified: r.verified,
-          sport: r.sport as SportId,
-          needed: r.needed,
-          capacity: r.capacity,
-          waitlist: r.waitlist_count ?? 0,
-          kickoffAt: r.kickoff_at,
-          venue: r.venue,
-          area: r.area,
+          organizerName: r.organizer_name ?? "Player",
+          organizerUsername: r.organizer_username ?? "player",
+          organizerAvatar: r.organizer_avatar ?? "",
+          verified: !!r.verified,
+          sport: safeSport(r.sport),
+          needed: typeof r.needed === "number" ? r.needed : 1,
+          capacity: typeof r.capacity === "number" && r.capacity > 0 ? r.capacity : 1,
+          waitlist: typeof r.waitlist_count === "number" ? r.waitlist_count : 0,
+          kickoffAt: r.kickoff_at ? r.kickoff_at : new Date().toISOString(),
+          venue: r.venue ?? "",
+          area: r.area ?? "",
           distanceKm,
-          skill: r.skill as PlayerRequest["skill"],
-          matchType: r.match_type as MatchType,
+          skill: safeSkill(r.skill),
+          matchType: safeMatchType(r.match_type),
           teamName: r.team_name ?? undefined,
           mutuals: undefined,
         };
