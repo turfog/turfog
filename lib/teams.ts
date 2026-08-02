@@ -27,6 +27,7 @@ export interface Team {
   verified: boolean;
   joined: boolean;
   following: boolean;
+  invited: boolean;
   viewerRole: string | null;
 }
 
@@ -57,7 +58,7 @@ export interface TeamPost {
   createdAt: string;
 }
 
-function mapTeam(t: Row, joined: boolean, following: boolean, viewerRole: string | null): Team {
+function mapTeam(t: Row, joined: boolean, following: boolean, invited: boolean, viewerRole: string | null): Team {
   return {
     id: str(t.id),
     name: str(t.name, "Team"),
@@ -76,7 +77,22 @@ function mapTeam(t: Row, joined: boolean, following: boolean, viewerRole: string
     verified: t.is_verified === true,
     joined,
     following,
+    invited,
     viewerRole,
+  };
+}
+
+function mapMember(m: Row): TeamMember {
+  return {
+    id: str(m.id),
+    userId: m.user_id ? str(m.user_id) : null,
+    username: str(m.username),
+    displayName: str(m.display_name, "Player"),
+    avatar: str(m.avatar),
+    role: str(m.role, "member"),
+    jerseyNumber: m.jersey_number == null ? null : num(m.jersey_number),
+    position: str(m.position),
+    joinedAt: str(m.joined_at),
   };
 }
 
@@ -93,7 +109,7 @@ export async function fetchTeams(): Promise<Team[]> {
     const { data: fol } = await supabase.from("team_follows").select("team_id").eq("user_id", user.id);
     followedSet = new Set(((fol ?? []) as Row[]).map((f) => str(f.team_id)));
   }
-  return list.map((t) => mapTeam(t, joinedSet.has(str(t.id)), followedSet.has(str(t.id)), null));
+  return list.map((t) => mapTeam(t, joinedSet.has(str(t.id)), followedSet.has(str(t.id)), false, null));
 }
 
 export async function fetchTeamBySlug(slug: string): Promise<Team | null> {
@@ -104,33 +120,35 @@ export async function fetchTeamBySlug(slug: string): Promise<Team | null> {
   const { data: { user } } = await supabase.auth.getUser();
   let joined = false;
   let following = false;
+  let invited = false;
   let viewerRole: string | null = null;
   if (user) {
     const { data: mem } = await supabase.from("team_members").select("role, status").eq("team_id", str(t.id)).eq("user_id", user.id).maybeSingle();
-    if (mem && (mem as Row).status === "active") {
-      joined = true;
-      viewerRole = str((mem as Row).role);
+    if (mem) {
+      const status = str((mem as Row).status);
+      if (status === "active") {
+        joined = true;
+        viewerRole = str((mem as Row).role);
+      } else if (status === "invited") {
+        invited = true;
+      }
     }
     const { data: fol } = await supabase.from("team_follows").select("id").eq("team_id", str(t.id)).eq("user_id", user.id).maybeSingle();
     following = !!fol;
   }
-  return mapTeam(t, joined, following, viewerRole);
+  return mapTeam(t, joined, following, invited, viewerRole);
 }
 
 export async function fetchTeamMembers(teamId: string): Promise<TeamMember[]> {
   const supabase = createClient();
   const { data } = await supabase.from("team_members").select("*").eq("team_id", teamId).eq("status", "active");
-  return ((data ?? []) as Row[]).map((m) => ({
-    id: str(m.id),
-    userId: m.user_id ? str(m.user_id) : null,
-    username: str(m.username),
-    displayName: str(m.display_name, "Player"),
-    avatar: str(m.avatar),
-    role: str(m.role, "member"),
-    jerseyNumber: m.jersey_number == null ? null : num(m.jersey_number),
-    position: str(m.position),
-    joinedAt: str(m.joined_at),
-  }));
+  return ((data ?? []) as Row[]).map(mapMember);
+}
+
+export async function fetchTeamInvites(teamId: string): Promise<TeamMember[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("team_members").select("*").eq("team_id", teamId).eq("status", "invited");
+  return ((data ?? []) as Row[]).map(mapMember);
 }
 
 export async function fetchTeamPosts(teamId: string): Promise<TeamPost[]> {
@@ -191,4 +209,58 @@ export async function createTeam(input: { name: string; sport: SportId; city: st
     status: "active",
   });
   return id;
+}
+
+// ----- Management (E1.5) -----
+
+export async function setMemberRole(memberId: string, role: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("team_set_role", { p_member_id: memberId, p_role: role });
+  return !error;
+}
+
+export async function setMemberJersey(memberId: string, jersey: number | null, position: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("team_set_jersey", { p_member_id: memberId, p_jersey: jersey, p_position: position });
+  return !error;
+}
+
+export async function removeMember(memberId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("team_remove_member", { p_member_id: memberId });
+  return !error;
+}
+
+export async function inviteToTeam(teamId: string, username: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("team_invite", { p_team_id: teamId, p_target_username: username });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function respondToInvite(teamId: string, accept: boolean): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("team_respond_invite", { p_team_id: teamId, p_accept: accept });
+  return !error;
+}
+
+export async function postTeamAnnouncement(teamId: string, text: string, imageUrl?: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data: player } = await supabase.from("players").select("full_name, username, profile_photo, verification_status").eq("auth_id", user.id).maybeSingle();
+  const p = (player ?? {}) as Row;
+  const { error } = await supabase.from("posts").insert({
+    author_id: user.id,
+    author_name: str(p.full_name, "Player"),
+    author_username: str(p.username, "player"),
+    author_avatar: str(p.profile_photo),
+    author_verified: p.verification_status === "verified",
+    text,
+    image_url: imageUrl ?? null,
+    image_alt: imageUrl ? "Team announcement" : "",
+    media_type: imageUrl ? "image" : null,
+    team_id: teamId,
+  });
+  return !error;
 }

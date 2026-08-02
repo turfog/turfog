@@ -8,7 +8,7 @@ import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { createClient } from "@/lib/supabase";
-import { fetchTeamBySlug, fetchTeamMembers, fetchTeamPosts, joinTeam, followTeam } from "@/lib/teams";
+import { fetchTeamBySlug, fetchTeamMembers, fetchTeamPosts, joinTeam, followTeam, respondToInvite } from "@/lib/teams";
 import type { Team, TeamMember, TeamPost } from "@/lib/teams";
 import type { SportId } from "@/types";
 import {
@@ -21,6 +21,7 @@ import {
   HeartIcon,
   CommentIcon,
   ClockIcon,
+  SettingsIcon,
   FootballIcon,
   CricketIcon,
   PickleballIcon,
@@ -98,11 +99,7 @@ export default function TeamProfile({ slug }: { slug: string }) {
   }, [slug, refresh]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-neutral-100 flex items-center justify-center">
-        <p className="text-body-sm text-neutral-400">Loading team...</p>
-      </div>
-    );
+    return <div className="min-h-screen bg-neutral-100 flex items-center justify-center"><p className="text-body-sm text-neutral-400">Loading team...</p></div>;
   }
 
   if (!team) {
@@ -138,8 +135,17 @@ export default function TeamProfile({ slug }: { slug: string }) {
     setBusy(null);
   };
 
+  const onRespond = async (accept: boolean) => {
+    if (busy) return;
+    setBusy(accept ? "accept" : "decline");
+    await respondToInvite(team.id, accept);
+    setBusy(null);
+    void refresh();
+  };
+
   const sortedMembers = [...members].sort((a, b) => (rolePriority[a.role] ?? 9) - (rolePriority[b.role] ?? 9));
   const cover = coverBySport[team.sport];
+  const canManage = team.viewerRole === "owner" || team.viewerRole === "captain";
 
   return (
     <div className="min-h-screen bg-neutral-100">
@@ -180,10 +186,24 @@ export default function TeamProfile({ slug }: { slug: string }) {
             </div>
           </div>
 
+          {team.invited && (
+            <div className="mb-4 bg-electric-blue/5 border border-electric-blue/20 rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-body-sm text-neutral-700">
+                <span className="font-semibold text-neutral-900">{team.name}</span> invited you to join the team.
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="primary" loading={busy === "accept"} onClick={() => onRespond(true)}>Accept</Button>
+                <Button size="sm" variant="outline" loading={busy === "decline"} onClick={() => onRespond(false)}>Decline</Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Button variant={team.joined ? "outline" : "primary"} loading={busy === "join"} onClick={onJoin}>
-              {team.joined ? "Leave team" : "Join team"}
-            </Button>
+            {!team.invited && (
+              <Button variant={team.joined ? "outline" : "primary"} loading={busy === "join"} onClick={onJoin}>
+                {team.joined ? "Leave team" : "Join team"}
+              </Button>
+            )}
             <Button variant={team.following ? "outline" : "primary"} loading={busy === "follow"} onClick={onFollow}>
               {team.following ? "Following" : "Follow"}
             </Button>
@@ -191,6 +211,14 @@ export default function TeamProfile({ slug }: { slug: string }) {
               <span className={cn("px-3 py-2 rounded-xl text-body-xs font-semibold", roleMeta(team.viewerRole).cls)}>
                 {roleMeta(team.viewerRole).label}
               </span>
+            )}
+            {canManage && (
+              <Link href={`/teams/${team.slug}/manage`}>
+                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral-200 text-body-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors">
+                  <SettingsIcon size={15} />
+                  Manage
+                </span>
+              </Link>
             )}
           </div>
 
