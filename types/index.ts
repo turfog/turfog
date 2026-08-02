@@ -206,7 +206,8 @@ export interface SocialPost {
   authorUsername: string;
   authorAvatar: string;
   authorVerified: boolean;
-  presence: "available-now" | "in-30-min" | "today" | "offline";
+  presence: string;
+  authorId?: string;
   trustScore: number;
   createdAt: string;
   sport?: SportId;
@@ -248,6 +249,8 @@ export interface PlayerRequest {
 
 export interface AvailablePlayer {
   id: string;
+  userId?: string;
+  userId?: string;
   name: string;
   username: string;
   avatar: string;

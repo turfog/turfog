@@ -65,11 +65,7 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      const [r, h, m] = await Promise.all([
-        fetchActiveRequests(),
-        fetchActiveHeartbeats(),
-        fetchMyParticipants(),
-      ]);
+      const [r, h, m] = await Promise.all([fetchActiveRequests(), fetchActiveHeartbeats(), fetchMyParticipants()]);
       setMyId(user?.id ?? null);
       setRequestRows(r);
       setHeartbeatRows(h);
@@ -89,10 +85,7 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
     const mapped: PlayerRequest[] = requestRows
       .filter((r) => !dismissed.has(r.id))
       .map((r) => {
-        const distanceKm =
-          lat != null && lng != null && r.latitude != null && r.longitude != null
-            ? Number(haversineKm(lat, lng, r.latitude, r.longitude).toFixed(1))
-            : 0;
+        const distanceKm = lat != null && lng != null && r.latitude != null && r.longitude != null ? Number(haversineKm(lat, lng, r.latitude, r.longitude).toFixed(1)) : 0;
         return {
           id: r.id,
           organizerName: r.organizer_name ?? "Player",
@@ -113,9 +106,7 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
           mutuals: undefined,
         };
       });
-    if (lat != null && lng != null) {
-      return mapped.filter((m) => m.distanceKm <= radius || m.distanceKm === 0);
-    }
+    if (lat != null && lng != null) return mapped.filter((m) => m.distanceKm <= radius || m.distanceKm === 0);
     return mapped;
   }, [requestRows, dismissed, lat, lng, radius]);
 
@@ -123,12 +114,10 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
     const mapped: AvailablePlayer[] = heartbeatRows
       .filter((h) => h.user_id !== myId)
       .map((h) => {
-        const distanceKm =
-          lat != null && lng != null && h.latitude != null && h.longitude != null
-            ? Number(haversineKm(lat, lng, h.latitude, h.longitude).toFixed(1))
-            : 0;
+        const distanceKm = lat != null && lng != null && h.latitude != null && h.longitude != null ? Number(haversineKm(lat, lng, h.latitude, h.longitude).toFixed(1)) : 0;
         return {
           id: h.id,
+          userId: h.user_id ?? undefined,
           name: h.user_name ?? "Player",
           username: h.user_username ?? "player",
           avatar: h.user_avatar ?? "",
@@ -141,31 +130,13 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
           wentLiveAt: h.created_at,
         };
       });
-    if (lat != null && lng != null) {
-      return mapped.filter((p) => p.distanceKm <= radius || p.distanceKm === 0);
-    }
+    if (lat != null && lng != null) return mapped.filter((p) => p.distanceKm <= radius || p.distanceKm === 0);
     return mapped;
   }, [heartbeatRows, myId, lat, lng, radius]);
 
-  const join = useCallback(
-    async (id: string, isFull: boolean) => {
-      await apiJoinRequest(id, isFull);
-      await refresh();
-    },
-    [refresh]
-  );
-
-  const leave = useCallback(
-    async (id: string) => {
-      await apiLeaveRequest(id);
-      await refresh();
-    },
-    [refresh]
-  );
-
-  const dismiss = useCallback((id: string) => {
-    setDismissed((s) => new Set(s).add(id));
-  }, []);
+  const join = useCallback(async (id: string, isFull: boolean) => { await apiJoinRequest(id, isFull); await refresh(); }, [refresh]);
+  const leave = useCallback(async (id: string) => { await apiLeaveRequest(id); await refresh(); }, [refresh]);
+  const dismiss = useCallback((id: string) => { setDismissed((s) => new Set(s).add(id)); }, []);
 
   return (
     <DiscoveryContext.Provider value={{ requests, heartbeats, myActions, loading, join, leave, dismiss }}>
