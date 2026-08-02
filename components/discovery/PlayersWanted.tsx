@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
+import { useMatchRequests } from "@/hooks/useMatchRequests";
 import type { PlayerRequest, SportId, MatchType } from "@/types";
 import {
   UsersIcon,
@@ -25,8 +26,6 @@ import {
   BadmintonIcon,
 } from "@/components/SvgIcons";
 
-const T = Date.now();
-const CAP = 7;
 const PREFS = new Set<SportId>(["football", "badminton", "box-cricket"]);
 
 const sportIcon: Record<SportId, React.ReactNode> = {
@@ -75,20 +74,6 @@ const urgBg = {
   calm: "bg-emerald/10",
 } as const;
 
-const MOCK_REQUESTS: PlayerRequest[] = [
-  { id: "r1", organizerName: "Rahul Sharma", organizerUsername: "rahul_sharma", organizerAvatar: "", verified: true, sport: "football", needed: 1, capacity: 10, waitlist: 0, kickoffAt: new Date(T + 14 * 60000).toISOString(), venue: "Champions Turf", area: "Porur", distanceKm: 0.9, skill: "intermediate", matchType: "casual", mutuals: 2 },
-  { id: "r2", organizerName: "Arjun Nair", organizerUsername: "arjun_nair", organizerAvatar: "", verified: true, sport: "box-cricket", needed: 0, capacity: 12, waitlist: 3, kickoffAt: new Date(T + 38 * 60000).toISOString(), venue: "Sixer Arena", area: "Anna Nagar", distanceKm: 2.4, skill: "advanced", matchType: "competitive", teamName: "Bandra Strikers" },
-  { id: "r3", organizerName: "Sneha Reddy", organizerUsername: "sneha_reddy", organizerAvatar: "", verified: false, sport: "badminton", needed: 2, capacity: 4, waitlist: 0, kickoffAt: new Date(T + 95 * 60000).toISOString(), venue: "Smash Court", area: "Velachery", distanceKm: 3.1, skill: "any", matchType: "practice", mutuals: 1 },
-  { id: "r4", organizerName: "Priya Patel", organizerUsername: "priya_patel", organizerAvatar: "", verified: false, sport: "pickleball", needed: 3, capacity: 8, waitlist: 0, kickoffAt: new Date(T + 8 * 60000).toISOString(), venue: "Pickle Hub", area: "OMR", distanceKm: 1.6, skill: "beginner", matchType: "casual" },
-  { id: "r5", organizerName: "Vikram Singh", organizerUsername: "vikram_singh", organizerAvatar: "", verified: true, sport: "football", needed: 4, capacity: 14, waitlist: 1, kickoffAt: new Date(T + 210 * 60000).toISOString(), venue: "Turf United", area: "Bandra", distanceKm: 4.7, skill: "advanced", matchType: "tournament", teamName: "Mumbai XI", mutuals: 3 },
-  { id: "r6", organizerName: "Ananya Iyer", organizerUsername: "ananya_iyer", organizerAvatar: "", verified: true, sport: "padel", needed: 2, capacity: 4, waitlist: 0, kickoffAt: new Date(T + 55 * 60000).toISOString(), venue: "Glass Court Club", area: "Powai", distanceKm: 2.0, skill: "intermediate", matchType: "competitive" },
-];
-
-const EXTRA: Array<Omit<PlayerRequest, "kickoffAt"> & { offsetMin: number }> = [
-  { id: "rx1", organizerName: "Karan Mehta", organizerUsername: "karan_mehta", organizerAvatar: "", verified: false, sport: "football", needed: 2, capacity: 10, waitlist: 0, offsetMin: 11, venue: "Goal Arena", area: "Andheri", distanceKm: 1.1, skill: "intermediate", matchType: "casual", mutuals: 1 },
-  { id: "rx2", organizerName: "Meera Nair", organizerUsername: "meera_nair", organizerAvatar: "", verified: true, sport: "badminton", needed: 1, capacity: 4, waitlist: 0, offsetMin: 6, venue: "Net Court", area: "Juhu", distanceKm: 0.6, skill: "beginner", matchType: "practice" },
-];
-
 function formatCountdown(ms: number): string | null {
   if (ms <= 0) return null;
   const s = Math.floor(ms / 1000);
@@ -118,66 +103,23 @@ function score(req: PlayerRequest, now: number): number {
   return timeScore + distScore + compat + ver + mut + pop;
 }
 
-function insertSorted(arr: PlayerRequest[], req: PlayerRequest, now: number): PlayerRequest[] {
-  const next = [...arr, req];
-  next.sort((a, b) => score(b, now) - score(a, now));
-  return next;
-}
-
 export default function PlayersWanted({ variant }: { variant: "rail" | "scroller" }) {
-  const [requests, setRequests] = useState<PlayerRequest[]>(MOCK_REQUESTS);
+  const { requests, myActions, loading, join, leave, dismiss } = useMatchRequests();
   const [now, setNow] = useState(0);
-  const [myAction, setMyAction] = useState<Record<string, "joined" | "waitlist">>({});
-  const poolRef = useRef(0);
 
   useEffect(() => {
-    const start = Date.now();
-    setNow(start);
-    setRequests((prev) => [...prev].sort((a, b) => score(b, start) - score(a, start)));
-
-    const tick = setInterval(() => setNow(Date.now()), 1000);
-
-    const adder = setInterval(() => {
-      const t = Date.now();
-      setRequests((prev) => {
-        const pruned = prev.filter((r) => new Date(r.kickoffAt).getTime() - t > 0);
-        if (pruned.length >= CAP) return pruned;
-        const template = EXTRA[poolRef.current % EXTRA.length];
-        poolRef.current += 1;
-        const id = `${template.id}-${t}`;
-        if (pruned.some((r) => r.id === id)) return pruned;
-        const req: PlayerRequest = { ...template, id, kickoffAt: new Date(t + template.offsetMin * 60000).toISOString() };
-        return insertSorted(pruned, req, t);
-      });
-    }, 14000);
-
-    return () => {
-      clearInterval(tick);
-      clearInterval(adder);
-    };
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
   }, []);
 
-  const visible = requests.filter((r) => now === 0 || new Date(r.kickoffAt).getTime() - now > 0);
+  const visible = requests
+    .filter((r) => now === 0 || new Date(r.kickoffAt).getTime() - now > 0)
+    .sort((a, b) => score(b, now || Date.now()) - score(a, now || Date.now()));
 
-  const handleJoin = (id: string) => {
-    if (myAction[id]) return;
-    const req = requests.find((r) => r.id === id);
-    if (!req) return;
-    const full = req.needed <= 0;
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id !== id ? r : full ? { ...r, waitlist: r.waitlist + 1 } : { ...r, needed: r.needed - 1 }
-      )
-    );
-    setMyAction((a) => ({ ...a, [id]: full ? "waitlist" : "joined" }));
-  };
-
-  const handleDismiss = (id: string) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
-    setMyAction((a) => {
-      const { [id]: _removed, ...rest } = a;
-      return rest;
-    });
+  const handleJoin = (req: PlayerRequest) => {
+    if (myActions[req.id]) return;
+    join(req.id, req.needed <= 0);
   };
 
   const card = (req: PlayerRequest) => {
@@ -188,7 +130,7 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
     const pct = Math.round((joined / req.capacity) * 100);
     const word = req.needed === 1 ? "player" : "players";
     const full = req.needed <= 0;
-    const action = myAction[req.id];
+    const action = myActions[req.id];
     const mt = matchTypeMeta[req.matchType];
 
     return (
@@ -207,11 +149,11 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="flex items-center gap-0.5 text-caption text-neutral-400">
               <MapPinIcon size={11} />
-              {req.distanceKm} km
+              {req.distanceKm > 0 ? `${req.distanceKm} km` : "nearby"}
             </span>
             <button
               type="button"
-              onClick={() => handleDismiss(req.id)}
+              onClick={() => dismiss(req.id)}
               aria-label="Dismiss request"
               className="w-6 h-6 rounded-md hover:bg-neutral-100 text-neutral-300 hover:text-neutral-500 flex items-center justify-center"
             >
@@ -293,7 +235,7 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
             type="button"
             whileTap={action ? undefined : { scale: 0.96 }}
             disabled={!!action}
-            onClick={() => handleJoin(req.id)}
+            onClick={() => handleJoin(req)}
             className={cn(
               "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-body-xs font-semibold transition-colors",
               action === "joined"
@@ -315,13 +257,23 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
               <><RunIcon size={14} />Join now</>
             )}
           </motion.button>
-          <Link
-            href="/games"
-            className="px-3 py-2 rounded-xl border border-neutral-200 text-neutral-500 text-body-xs font-medium hover:bg-neutral-50 inline-flex items-center gap-1"
-          >
-            Details
-            <ChevronRightIcon size={13} />
-          </Link>
+          {action === "joined" ? (
+            <button
+              type="button"
+              onClick={() => leave(req.id)}
+              className="px-3 py-2 rounded-xl border border-neutral-200 text-neutral-500 text-body-xs font-medium hover:bg-neutral-50"
+            >
+              Cancel
+            </button>
+          ) : (
+            <Link
+              href="/games"
+              className="px-3 py-2 rounded-xl border border-neutral-200 text-neutral-500 text-body-xs font-medium hover:bg-neutral-50 inline-flex items-center gap-1"
+            >
+              Details
+              <ChevronRightIcon size={13} />
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -345,7 +297,13 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
         <p className="text-caption text-neutral-400 -mt-1 mb-3">Real-time requests near you</p>
       )}
 
-      {variant === "rail" ? (
+      {loading ? (
+        <div className="text-center py-8 text-body-xs text-neutral-400">Loading live requests...</div>
+      ) : visible.length === 0 ? (
+        <div className="text-center py-8 text-body-xs text-neutral-400">
+          No live requests nearby. Post one from the centre panel.
+        </div>
+      ) : variant === "rail" ? (
         <div className="flex flex-col gap-3">
           <AnimatePresence mode="popLayout" initial={false}>
             {visible.map((req) => {
