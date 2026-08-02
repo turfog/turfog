@@ -264,3 +264,46 @@ export async function postTeamAnnouncement(teamId: string, text: string, imageUr
   });
   return !error;
 }
+// ----- Recruitment (E2) -----
+
+export interface PlayerSearchResult {
+  id: string;
+  username: string;
+  fullName: string;
+  avatar: string;
+  verified: boolean;
+  presence: string;
+  reliability: number;
+  city: string;
+  followers: number;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export async function searchPlayers(opts: { query: string; verifiedOnly?: boolean }): Promise<PlayerSearchResult[]> {
+  const supabase = createClient();
+  let q = supabase
+    .from("players")
+    .select("auth_id, username, full_name, profile_photo, verification_status, presence_status, reliability_score, city, followers_count, latitude, longitude")
+    .limit(12);
+  const term = opts.query.trim();
+  if (term) {
+    const safe = term.replace(/[,()%_\\]/g, " ");
+    q = q.or(`username.ilike.%${safe}%,full_name.ilike.%${safe}%`);
+  }
+  if (opts.verifiedOnly) q = q.eq("verification_status", "verified");
+  const { data } = await q;
+  return ((data ?? []) as Row[]).map((r) => ({
+    id: str(r.auth_id),
+    username: str(r.username),
+    fullName: str(r.full_name, "Player"),
+    avatar: str(r.profile_photo),
+    verified: r.verification_status === "verified",
+    presence: str(r.presence_status, "offline"),
+    reliability: num(r.reliability_score, 4.8),
+    city: str(r.city),
+    followers: num(r.followers_count),
+    latitude: r.latitude != null ? num(r.latitude) : null,
+    longitude: r.longitude != null ? num(r.longitude) : null,
+  }));
+}

@@ -194,6 +194,7 @@ export default function TeamManage({ slug }: { slug: string }) {
         {/* Invite player */}
         <section>
           <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3">Invite a player</h2>
+          <Link href={`/teams/${team.slug}/recruit`} className="inline-flex items-center gap-1.5 mb-3 px-3 py-2 rounded-xl border border-primary-green/30 text-primary-green text-body-xs font-semibold hover:bg-primary-green/5 transition-colors"><PlusIcon size={15} />Advanced recruit search</Link>
           <Card padding="lg">
             <div className="flex items-center gap-2">
               <input
