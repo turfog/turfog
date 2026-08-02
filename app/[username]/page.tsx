@@ -1,52 +1,26 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { fetchProfileView } from "@/lib/profile";
 import PublicProfile from "@/components/profile/PublicProfile";
 
-const MOCK_USERNAMES = [
-  "rahul_sharma",
-  "priya_patel",
-  "arjun_nair",
-  "sneha_reddy",
-  "vikram_singh",
-  "ananya_iyer",
-];
+export const dynamic = "force-dynamic";
 
-export function generateStaticParams() {
-  return MOCK_USERNAMES.map((username) => ({ username }));
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
-  const name = username
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-
+  const name = username.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   return {
     title: `${name} - Turfog`,
-    description: `${name}'s sports profile on Turfog. Matches, stats, achievements, and sporting journey. Never cancel a match again.`,
-    openGraph: {
-      title: `${name} - Turfog`,
-      description: `View ${name}'s sports profile, match history, and achievements on Turfog.`,
-      type: "profile",
-    },
+    description: `${name}'s sports identity on Turfog. Live status, matches, posts, and reputation. Never cancel a match again.`,
+    openGraph: { title: `${name} - Turfog`, description: `${name}'s public sports profile on Turfog.`, type: "profile" },
   };
 }
 
-export default async function UsernamePage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+export default async function UsernamePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-
-  if (!MOCK_USERNAMES.includes(username)) {
-    notFound();
-  }
-
-  return <PublicProfile username={username} />;
+  const supa = await createServerSupabaseClient();
+  const { data: { user } } = await supa.auth.getUser();
+  const payload = await fetchProfileView(username, user?.id ?? null);
+  if (!payload) notFound();
+  return <PublicProfile payload={payload} />;
 }
