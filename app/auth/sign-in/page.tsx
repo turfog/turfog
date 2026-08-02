@@ -12,23 +12,44 @@ import { MailIcon, LockIcon, ZapIcon } from "@/components/SvgIcons";
 export default function SignInPage() {
   const router = useRouter();
   const supabase = createClient();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const isEmail = identifier.includes("@");
+
   const handleSignIn = async () => {
     setError("");
-    setLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
-    if (signInError) {
-      setError(signInError.message);
+    if (!identifier.trim() || !password) {
+      setError("Please fill in all fields");
       return;
     }
+    setLoading(true);
+
+    if (isEmail) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password,
+      });
+      setLoading(false);
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+    } else {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: `${identifier}@turfog.username`,
+        password,
+      });
+      setLoading(false);
+      if (signInError) {
+        setError("Invalid username or password");
+        return;
+      }
+    }
+
     router.push("/dashboard");
     router.refresh();
   };
@@ -41,34 +62,36 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-neutral-900 flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-md"
+        className="w-full max-w-sm"
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-primary-green rounded-2xl mb-4">
-            <ZapIcon size={28} className="text-white" />
-          </div>
-          <h1 className="text-display-md font-bold text-neutral-900 font-display">
+          <Link href="/">
+            <span className="inline-flex items-center justify-center w-12 h-12 bg-primary-green rounded-2xl mb-4">
+              <ZapIcon size={24} className="text-white" />
+            </span>
+          </Link>
+          <h1 className="text-display-sm font-bold text-white font-display">
             Welcome back
           </h1>
-          <p className="text-body-sm text-neutral-500 mt-1">
-            Never cancel a match again
+          <p className="text-body-xs text-white/40 mt-1">
+            Sign in to your Turfog account
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-3xl border border-neutral-200 shadow-card p-6 space-y-4">
+        <div className="bg-white rounded-3xl p-6 space-y-4">
           <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={setEmail}
-            placeholder="you@example.com"
+            label={isEmail ? "Email" : "Username"}
+            type="text"
+            value={identifier}
+            onChange={setIdentifier}
+            placeholder="Email or username"
             icon={<MailIcon size={18} />}
           />
           <Input
@@ -80,6 +103,34 @@ export default function SignInPage() {
             icon={<LockIcon size={18} />}
           />
 
+          {/* Remember Me + Forgot */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setRememberMe(!rememberMe)}
+                className={`w-4.5 h-4.5 w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center transition-all ${
+                  rememberMe
+                    ? "bg-primary-green border-primary-green"
+                    : "border-neutral-300"
+                }`}
+              >
+                {rememberMe && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+              <span className="text-body-xs text-neutral-600">Remember me</span>
+            </label>
+            <Link
+              href="/auth/forgot-password"
+              className="text-body-xs text-electric-blue font-medium hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           {error && (
             <motion.p
               initial={{ opacity: 0 }}
@@ -90,12 +141,7 @@ export default function SignInPage() {
             </motion.p>
           )}
 
-          <Button
-            fullWidth
-            loading={loading}
-            onClick={handleSignIn}
-            type="submit"
-          >
+          <Button fullWidth loading={loading} onClick={handleSignIn}>
             Sign in
           </Button>
 
@@ -108,33 +154,18 @@ export default function SignInPage() {
 
           <Button variant="outline" fullWidth onClick={handleGoogleSignIn}>
             <svg width="18" height="18" viewBox="0 0 24 24">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
             Continue with Google
           </Button>
 
-          <p className="text-center text-body-sm text-neutral-500">
+          <p className="text-center text-body-xs text-neutral-500">
             Don&apos;t have an account?{" "}
-            <Link
-              href="/auth/sign-up"
-              className="text-electric-blue font-semibold hover:underline"
-            >
-              Sign up
+            <Link href="/auth/sign-up" className="text-electric-blue font-semibold hover:underline">
+              Create account
             </Link>
           </p>
         </div>
