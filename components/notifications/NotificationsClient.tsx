@@ -7,13 +7,14 @@ import { cn, timeAgo } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
 import { fetchNotifications } from "@/lib/notifications";
 import type { NotificationItem } from "@/lib/notifications";
-import { HeartIcon, CommentIcon, UsersIcon, RunIcon, BellIcon, ArrowLeftIcon } from "@/components/SvgIcons";
+import { HeartIcon, CommentIcon, UsersIcon, RunIcon, BellIcon, ArrowLeftIcon, TrophyIcon } from "@/components/SvgIcons";
 
 function iconFor(t: NotificationItem["type"]): { Icon: (p: { size?: number; className?: string }) => React.ReactNode; cls: string } {
   switch (t) {
     case "like": return { Icon: HeartIcon, cls: "bg-coral/10 text-coral" };
     case "comment": return { Icon: CommentIcon, cls: "bg-electric-blue/10 text-electric-blue" };
     case "follow": return { Icon: UsersIcon, cls: "bg-primary-green/10 text-primary-green" };
+    case "team-invite": return { Icon: TrophyIcon, cls: "bg-amber/10 text-amber" };
     default: return { Icon: RunIcon, cls: "bg-sunset-orange/10 text-sunset-orange" };
   }
 }
@@ -34,11 +35,19 @@ export default function NotificationsClient() {
             <ArrowLeftIcon size={14} />
             Home
           </Link>
-          <div className="flex items-center gap-2">
-            <BellIcon size={22} className="text-primary-green" />
-            <h1 className="text-display-sm font-bold text-neutral-900 font-display">Notifications</h1>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <BellIcon size={22} className="text-primary-green" />
+              <h1 className="text-display-sm font-bold text-neutral-900 font-display">Notifications</h1>
+            </div>
+            <Link href="/invites">
+              <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral-200 text-body-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors">
+                <TrophyIcon size={15} />
+                Team invites
+              </span>
+            </Link>
           </div>
-          <p className="text-body-sm text-neutral-500">Followers, reactions, and live opportunities near you.</p>
+          <p className="text-body-sm text-neutral-500">Followers, reactions, team invites, and live opportunities near you.</p>
         </div>
       </div>
 
@@ -57,7 +66,7 @@ export default function NotificationsClient() {
           <div className="text-center py-16">
             <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-3"><BellIcon size={26} className="text-neutral-300" /></div>
             <p className="text-body-sm text-neutral-500">You are all caught up</p>
-            <p className="text-caption text-neutral-400 mt-1">New followers, reactions, and nearby matches will appear here.</p>
+            <p className="text-caption text-neutral-400 mt-1">New followers, reactions, team invites, and nearby matches will appear here.</p>
           </div>
         ) : (
           items.map((n, i) => {

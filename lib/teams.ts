@@ -307,3 +307,51 @@ export async function searchPlayers(opts: { query: string; verifiedOnly?: boolea
     longitude: r.longitude != null ? num(r.longitude) : null,
   }));
 }
+
+// ----- Invite responses (E2b) -----
+
+export async function respondToInviteStatus(
+  teamId: string,
+  status: "accepted" | "declined" | "interested" | "available_later"
+): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("team_respond_invite_status", { p_team_id: teamId, p_status: status });
+  return !error;
+}
+
+export interface TeamInviteItem {
+  teamId: string;
+  teamName: string;
+  teamSlug: string;
+  teamSport: SportId;
+  teamLogo: string;
+  invitedAt: string;
+}
+
+export async function fetchMyTeamInvites(): Promise<TeamInviteItem[]> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data: inv } = await supabase
+    .from("team_members")
+    .select("team_id, created_at")
+    .eq("user_id", user.id)
+    .eq("status", "invited")
+    .order("created_at", { ascending: false });
+  const list = (inv ?? []) as Row[];
+  if (list.length === 0) return [];
+  const teamIds = list.map((i) => str(i.team_id));
+  const { data: teams } = await supabase.from("teams").select("id, name, slug, sport, logo").in("id", teamIds);
+  const teamMap = new Map<string, Row>(((teams ?? []) as Row[]).map((t) => [str(t.id), t]));
+  return list.map((i) => {
+    const t = teamMap.get(str(i.team_id)) ?? ({} as Row);
+    return {
+      teamId: str(i.team_id),
+      teamName: str(t.name, "A team"),
+      teamSlug: str(t.slug),
+      teamSport: safeSport(t.sport),
+      teamLogo: str(t.logo),
+      invitedAt: str(i.created_at),
+    };
+  });
+}

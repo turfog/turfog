@@ -3,7 +3,7 @@ import { fetchActiveRequests } from "@/lib/discovery";
 
 export interface NotificationItem {
   id: string;
-  type: "follow" | "like" | "comment" | "opportunity";
+  type: "follow" | "like" | "comment" | "opportunity" | "team-invite";
   actorName: string;
   actorAvatar: string;
   text: string;
@@ -94,6 +94,35 @@ export async function fetchNotifications(): Promise<NotificationItem[]> {
       });
     });
 
+    // team invites
+    const { data: teamInvites } = await supabase
+      .from("team_members")
+      .select("team_id, created_at")
+      .eq("user_id", me)
+      .eq("status", "invited")
+      .order("created_at", { ascending: false })
+      .limit(15);
+    const tiList = (teamInvites ?? []) as Row[];
+    if (tiList.length > 0) {
+      const teamIds = tiList.map((t) => str(t.team_id));
+      const { data: teamsData } = await supabase.from("teams").select("id, name, slug").in("id", teamIds);
+      const teamMap = new Map<string, { name: string; slug: string }>(
+        ((teamsData ?? []) as Row[]).map((tm) => [str(tm.id), { name: str(tm.name, "A team"), slug: str(tm.slug) }])
+      );
+      tiList.forEach((ti, i) => {
+        const tm = teamMap.get(str(ti.team_id));
+        items.push({
+          id: `tinv-${str(ti.team_id)}-${i}`,
+          type: "team-invite",
+          actorName: tm?.name ?? "A team",
+          actorAvatar: "",
+          text: "invited you to join their team",
+          href: "/invites",
+          createdAt: str(ti.created_at),
+        });
+      });
+    }
+
     const reqs = await fetchActiveRequests();
     reqs
       .filter((r) => r.organizer_id !== me)
@@ -110,7 +139,7 @@ export async function fetchNotifications(): Promise<NotificationItem[]> {
         });
       });
   } catch {
-    // degrade gracefully; return whatever was collected
+    // degrade gracefully
   }
 
   return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 40);
