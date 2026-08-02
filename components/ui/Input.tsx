@@ -6,6 +6,7 @@ import { EyeIcon, EyeOffIcon } from "@/components/SvgIcons";
 
 interface InputProps {
   label?: string;
+  srOnlyLabel?: boolean;
   type?: string;
   value: string;
   onChange: (value: string) => void;
@@ -18,6 +19,7 @@ interface InputProps {
 
 export default function Input({
   label,
+  srOnlyLabel = false,
   type = "text",
   value,
   onChange,
@@ -34,7 +36,12 @@ export default function Input({
   return (
     <div className={cn("space-y-1.5", className)}>
       {label && (
-        <label className="block text-body-sm font-medium text-neutral-700">
+        <label
+          className={cn(
+            "block text-body-sm font-medium text-neutral-700",
+            srOnlyLabel && "sr-only"
+          )}
+        >
           {label}
         </label>
       )}

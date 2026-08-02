@@ -1,12 +1,36 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/", "/auth", "/sports", "/setup-username"];
+const PUBLIC_PREFIXES = [
+  "/auth/sign-up",
+  "/auth/forgot-password",
+  "/auth/callback",
+  "/sports",
+  "/setup-username",
+];
+
+// Single-segment routes that are private app pages.
+// Any other single-segment route (e.g. /rahul_sharma) is a public player profile.
+const PRIVATE_SEGMENTS = new Set([
+  "dashboard",
+  "profile",
+  "settings",
+  "communities",
+  "games",
+  "setup-username",
+  "auth",
+  "sports",
+  "api",
+]);
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
+  if (pathname === "/") return true;
+  if (PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return true;
+  }
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length === 1 && !PRIVATE_SEGMENTS.has(segments[0])) return true;
+  return false;
 }
 
 export async function middleware(request: NextRequest) {
@@ -45,15 +69,17 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  if (!user && !isPublicPath(path)) {
+  // Logged-in users never see the login landing or auth pages.
+  if (user && (path === "/" || path.startsWith("/auth"))) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/sign-in";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  if (user && path.startsWith("/auth")) {
+  // Logged-out users only reach public routes; everything else bounces to the login landing.
+  if (!user && !isPublicPath(path)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
