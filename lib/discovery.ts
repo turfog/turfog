@@ -275,7 +275,7 @@ export async function leaveRequest(requestId: string): Promise<void> {
   }
 }
 
-// ----- Shared, ref-counted Realtime subscription (one channel for the whole app) -----
+// ----- Shared, ref-counted Realtime subscription: discovery tables -----
 type RequestListener = () => void;
 const requestListeners = new Set<RequestListener>();
 let sharedChannel: RealtimeChannel | null = null;
@@ -306,39 +306,8 @@ export function subscribeRequests(onChange: RequestListener): () => void {
     }
   };
 }
-// ----- Second shared subscription: social tables -----
-type SocialListener = () => void;
-const socialListeners = new Set<SocialListener>();
-let socialChannel: RealtimeChannel | null = null;
-let socialClient: SupabaseClient | null = null;
 
-function notifySocialListeners(): void {
-  socialListeners.forEach((listener) => listener());
-}
-
-export function subscribeSocial(onChange: SocialListener): () => void {
-  socialListeners.add(onChange);
-  if (!socialChannel) {
-    const client = createClient();
-    socialClient = client;
-    socialChannel = client
-      .channel("discovery-social")
-      .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => notifySocialListeners())
-      .on("postgres_changes", { event: "*", schema: "public", table: "post_likes" }, () => notifySocialListeners())
-      .on("postgres_changes", { event: "*", schema: "public", table: "post_comments" }, () => notifySocialListeners())
-      .on("postgres_changes", { event: "*", schema: "public", table: "follows" }, () => notifySocialListeners())
-      .subscribe();
-  }
-  return () => {
-    socialListeners.delete(onChange);
-    if (socialListeners.size === 0 && socialChannel && socialClient) {
-      socialClient.removeChannel(socialChannel);
-      socialChannel = null;
-      socialClient = null;
-    }
-  };
-}
-// ----- Second shared subscription: social tables -----
+// ----- Shared, ref-counted Realtime subscription: social tables -----
 type SocialListener = () => void;
 const socialListeners = new Set<SocialListener>();
 let socialChannel: RealtimeChannel | null = null;

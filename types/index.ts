@@ -250,7 +250,6 @@ export interface PlayerRequest {
 export interface AvailablePlayer {
   id: string;
   userId?: string;
-  userId?: string;
   name: string;
   username: string;
   avatar: string;
