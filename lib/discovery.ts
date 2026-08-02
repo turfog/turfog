@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase";
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
 export interface MatchRequestRow {
   id: string;
@@ -305,22 +306,45 @@ export async function leaveRequest(requestId: string): Promise<void> {
   }
 }
 
-export function subscribeRequests(onChange: () => void): () => void {
-  const supabase = createClient();
-  const channel = supabase
-    .channel("discovery-requests")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "match_requests" },
-      () => onChange()
-    )
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "match_request_participants" },
-      () => onChange()
-    )
-    .subscribe();
+// ----- Shared, ref-counted Realtime subscription -----
+// One channel for the whole app, no matter how many widgets subscribe.
+
+type RequestListener = () => void;
+const requestListeners = new Set<RequestListener>();
+let sharedChannel: RealtimeChannel | null = null;
+let sharedClient: SupabaseClient | null = null;
+
+function notifyRequestListeners(): void {
+  requestListeners.forEach((listener) => listener());
+}
+
+export function subscribeRequests(onChange: RequestListener): () => void {
+  requestListeners.add(onChange);
+
+  if (!sharedChannel) {
+    const client = createClient();
+    sharedClient = client;
+    sharedChannel = client
+      .channel("discovery-requests")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "match_requests" },
+        () => notifyRequestListeners()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "match_request_participants" },
+        () => notifyRequestListeners()
+      )
+      .subscribe();
+  }
+
   return () => {
-    supabase.removeChannel(channel);
+    requestListeners.delete(onChange);
+    if (requestListeners.size === 0 && sharedChannel && sharedClient) {
+      sharedClient.removeChannel(sharedChannel);
+      sharedChannel = null;
+      sharedClient = null;
+    }
   };
 }
