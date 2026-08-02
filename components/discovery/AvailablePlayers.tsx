@@ -11,9 +11,9 @@ import type { AvailablePlayer, SportId } from "@/types";
 import {
   MapPinIcon,
   CheckCircleIcon,
-  ChevronRightIcon,
   ZapIcon,
   UsersIcon,
+  MessageIcon,
   FootballIcon,
   CricketIcon,
   PickleballIcon,
@@ -99,9 +99,7 @@ export default function AvailablePlayers({ variant }: { variant: "rail" | "scrol
               onClick={() => social.follow(p.userId as string, p.username)}
               className={cn(
                 "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-body-xs font-semibold transition-colors",
-                following
-                  ? "bg-neutral-100 text-neutral-600 border border-neutral-200"
-                  : "bg-primary-green text-white hover:bg-primary-green/90"
+                following ? "bg-neutral-100 text-neutral-600 border border-neutral-200" : "bg-primary-green text-white hover:bg-primary-green/90"
               )}
             >
               {following ? <><CheckCircleIcon size={14} />Following</> : <><UsersIcon size={14} />Follow</>}
@@ -111,10 +109,12 @@ export default function AvailablePlayers({ variant }: { variant: "rail" | "scrol
               View profile
             </Link>
           )}
-          <Link href={`/${p.username}`} className="px-3 py-2 rounded-xl border border-neutral-200 text-neutral-500 text-body-xs font-medium hover:bg-neutral-50 inline-flex items-center gap-1 transition-colors">
-            View
-            <ChevronRightIcon size={13} />
-          </Link>
+          {p.userId && (
+            <Link href={`/messages?to=${p.userId}`} className="px-3 py-2 rounded-xl border border-neutral-200 text-neutral-500 text-body-xs font-medium hover:bg-neutral-50 inline-flex items-center gap-1 transition-colors">
+              <MessageIcon size={14} />
+              Message
+            </Link>
+          )}
         </div>
       </div>
     );

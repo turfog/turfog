@@ -6,10 +6,12 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
 import PresenceSelector from "@/components/discovery/PresenceSelector";
+import { useMessaging } from "@/context/MessagingContext";
 import {
   HomeIcon,
   GamesIcon,
   CommunityIcon,
+  MessageIcon,
   BellIcon,
   UserIcon,
   SettingsIcon,
@@ -22,18 +24,16 @@ const navItems = [
   { label: "Home", href: "/", icon: HomeIcon },
   { label: "Games", href: "/games", icon: GamesIcon },
   { label: "Communities", href: "/communities", icon: CommunityIcon },
+  { label: "Messages", href: "/messages", icon: MessageIcon },
   { label: "Notifications", href: "/notifications", icon: BellIcon },
   { label: "Profile", href: "/profile", icon: UserIcon },
 ];
 
-const myCommunities = [
-  "Mumbai weekend warriors",
-  "Bandra box cricket league",
-  "Andheri badminton hub",
-];
+const myCommunities = ["Mumbai weekend warriors", "Bandra box cricket league", "Andheri badminton hub"];
 
 export default function LeftNav({ player }: { player: Player }) {
   const pathname = usePathname();
+  const { totalUnread } = useMessaging();
 
   return (
     <aside className="hidden lg:flex flex-col h-[calc(100vh-4rem)] sticky top-16 border-r border-neutral-200 bg-white px-3 py-4 overflow-y-auto scrollbar-hide">
@@ -56,13 +56,16 @@ export default function LeftNav({ player }: { player: Player }) {
                 whileTap={{ scale: 0.97 }}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-sm font-medium transition-all",
-                  active
-                    ? "bg-primary-green/10 text-primary-green"
-                    : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                  active ? "bg-primary-green/10 text-primary-green" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                 )}
               >
                 <item.icon size={20} />
                 {item.label}
+                {item.href === "/messages" && totalUnread > 0 && (
+                  <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-coral text-white text-caption font-semibold flex items-center justify-center">
+                    {totalUnread > 9 ? "9+" : totalUnread}
+                  </span>
+                )}
               </motion.div>
             </Link>
           );
@@ -74,9 +77,7 @@ export default function LeftNav({ player }: { player: Player }) {
       </div>
 
       <div className="mt-5">
-        <p className="px-3 text-caption font-semibold text-neutral-400 uppercase tracking-wide mb-2">
-          Your communities
-        </p>
+        <p className="px-3 text-caption font-semibold text-neutral-400 uppercase tracking-wide mb-2">Your communities</p>
         <div className="space-y-0.5">
           {myCommunities.map((c) => (
             <Link key={c} href="/communities">
