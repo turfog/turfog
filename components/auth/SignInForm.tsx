@@ -40,7 +40,7 @@ export default function SignInForm() {
       setError(isEmail ? signInError.message : "Invalid username or password");
       return;
     }
-    router.push("/dashboard");
+    router.push("/");
     router.refresh();
   };
 

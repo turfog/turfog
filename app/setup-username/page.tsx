@@ -74,7 +74,7 @@ export default function SetupUsernamePage() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      router.push("/auth/sign-in");
+      router.push("/");
       return;
     }
 
@@ -90,7 +90,7 @@ export default function SetupUsernamePage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push("/");
     router.refresh();
   };
 

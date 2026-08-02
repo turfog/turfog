@@ -176,3 +176,48 @@ export interface SportPageData {
   topPlayers: Player[];
   recentMatches: MatchResultFeedData[];
 }
+
+// ----- Social feed -----
+
+export interface PostMedia {
+  type: "image" | "video";
+  url: string;
+  alt: string;
+}
+
+export interface PostHeartbeat {
+  type: HeartbeatType;
+  label: string;
+  playersNeeded?: number;
+  joinUrl: string;
+}
+
+export interface PostComment {
+  id: string;
+  authorName: string;
+  authorAvatar: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface SocialPost {
+  id: string;
+  authorName: string;
+  authorUsername: string;
+  authorAvatar: string;
+  authorVerified: boolean;
+  presence: "available-now" | "in-30-min" | "today" | "offline";
+  trustScore: number;
+  createdAt: string;
+  sport?: SportId;
+  location?: string;
+  text: string;
+  media: PostMedia | null;
+  heartbeat: PostHeartbeat | null;
+  likes: number;
+  comments: PostComment[];
+  shares: number;
+  likedByMe: boolean;
+  savedByMe: boolean;
+  nearbyWantToJoin: number;
+}

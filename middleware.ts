@@ -6,17 +6,15 @@ const PUBLIC_PREFIXES = [
   "/auth/forgot-password",
   "/auth/callback",
   "/sports",
-  "/setup-username",
 ];
 
-// Single-segment routes that are private app pages.
-// Any other single-segment route (e.g. /rahul_sharma) is a public player profile.
 const PRIVATE_SEGMENTS = new Set([
   "dashboard",
   "profile",
   "settings",
   "communities",
   "games",
+  "notifications",
   "setup-username",
   "auth",
   "sports",
@@ -51,9 +49,7 @@ export async function middleware(request: NextRequest) {
             options: Record<string, unknown>;
           }[]
         ) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -69,15 +65,34 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // Logged-in users never see the login landing or auth pages.
-  if (user && (path === "/" || path.startsWith("/auth"))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+  if (user) {
+    const { data: playerRow } = await supabase
+      .from("players")
+      .select("username_set")
+      .eq("auth_id", user.id)
+      .maybeSingle();
+    const usernameSet = !!playerRow?.username_set;
+    const onSetup = path === "/setup-username";
+
+    if (onSetup && usernameSet) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+    if (!onSetup && !usernameSet) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/setup-username";
+      return NextResponse.redirect(url);
+    }
+    if (path.startsWith("/auth")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
   }
 
-  // Logged-out users only reach public routes; everything else bounces to the login landing.
-  if (!user && !isPublicPath(path)) {
+  if (!isPublicPath(path)) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

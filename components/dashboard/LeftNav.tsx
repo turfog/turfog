@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import Logo from "@/components/Logo";
+import Avatar from "@/components/ui/Avatar";
+import PresenceSelector from "@/components/discovery/PresenceSelector";
 import {
   HomeIcon,
   GamesIcon,
@@ -14,37 +14,49 @@ import {
   UserIcon,
   SettingsIcon,
   LogOutIcon,
+  PlusIcon,
 } from "@/components/SvgIcons";
+import type { Player } from "@/types";
 
 const navItems = [
-  { label: "Home", href: "/dashboard", icon: HomeIcon },
+  { label: "Home", href: "/", icon: HomeIcon },
   { label: "Games", href: "/games", icon: GamesIcon },
   { label: "Communities", href: "/communities", icon: CommunityIcon },
   { label: "Notifications", href: "/notifications", icon: BellIcon },
   { label: "Profile", href: "/profile", icon: UserIcon },
 ];
 
-export default function LeftNav() {
+const myCommunities = [
+  "Mumbai weekend warriors",
+  "Bandra box cricket league",
+  "Andheri badminton hub",
+];
+
+export default function LeftNav({ player }: { player: Player }) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex flex-col h-screen sticky top-0 border-r border-neutral-200 bg-white px-3 py-5">
-      {/* Logo */}
-      <Link href="/dashboard" className="px-3 mb-8 inline-flex" aria-label="Turfog home">
-        <Logo size={30} />
+    <aside className="hidden lg:flex flex-col h-[calc(100vh-4rem)] sticky top-16 border-r border-neutral-200 bg-white px-3 py-4 overflow-y-auto scrollbar-hide">
+      <Link href="/#composer">
+        <motion.span
+          whileTap={{ scale: 0.97 }}
+          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-primary-green text-white text-body-sm font-semibold rounded-xl shadow-glow-green hover:bg-primary-green/90 transition-colors mb-4"
+        >
+          <PlusIcon size={18} />
+          Create match
+        </motion.span>
       </Link>
 
-      {/* Nav Items */}
-      <nav className="flex-1 space-y-1">
+      <nav className="space-y-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const active = pathname === item.href;
           return (
             <Link key={item.href} href={item.href}>
               <motion.div
                 whileTap={{ scale: 0.97 }}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-sm font-medium transition-all duration-200",
-                  isActive
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-sm font-medium transition-all",
+                  active
                     ? "bg-primary-green/10 text-primary-green"
                     : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                 )}
@@ -57,24 +69,46 @@ export default function LeftNav() {
         })}
       </nav>
 
-      {/* Bottom */}
-      <div className="space-y-1 border-t border-neutral-200 pt-4">
-        <Link href="/settings">
-          <motion.div
-            whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-all"
-          >
-            <SettingsIcon size={20} />
-            Settings
-          </motion.div>
+      <div className="mt-5">
+        <PresenceSelector />
+      </div>
+
+      <div className="mt-5">
+        <p className="px-3 text-caption font-semibold text-neutral-400 uppercase tracking-wide mb-2">
+          Your communities
+        </p>
+        <div className="space-y-0.5">
+          {myCommunities.map((c) => (
+            <Link key={c} href="/communities">
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-body-xs text-neutral-600 hover:bg-neutral-100 transition-colors">
+                <span className="w-2 h-2 rounded-full bg-primary-green" />
+                <span className="truncate">{c}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-auto pt-4 border-t border-neutral-200 space-y-1">
+        <Link href="/profile">
+          <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-neutral-100 transition-colors">
+            <Avatar alt={player.full_name ?? player.username ?? "You"} src={player.profile_photo} size="sm" />
+            <div className="min-w-0">
+              <p className="text-body-xs font-semibold text-neutral-900 truncate">{player.full_name ?? "You"}</p>
+              <p className="text-caption text-neutral-400 truncate">@{player.username}</p>
+            </div>
+          </div>
         </Link>
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-body-sm font-medium text-coral hover:bg-coral/5 w-full transition-all"
-        >
-          <LogOutIcon size={20} />
+        <Link href="/settings">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-xl text-body-xs font-medium text-neutral-600 hover:bg-neutral-100">
+            <SettingsIcon size={18} />
+            Settings
+          </div>
+        </Link>
+        <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-body-xs font-medium text-coral hover:bg-coral/5 w-full">
+          <LogOutIcon size={18} />
           Log out
-        </motion.button>
+        </button>
       </div>
     </aside>
   );
