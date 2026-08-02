@@ -18,6 +18,7 @@ import {
   LogOutIcon,
   PlusIcon,
   TrophyIcon,
+  ShieldIcon,
 } from "@/components/SvgIcons";
 import type { Player } from "@/types";
 
@@ -26,6 +27,7 @@ const navItems = [
   { label: "Games", href: "/games", icon: GamesIcon },
   { label: "Communities", href: "/communities", icon: CommunityIcon },
   { label: "Teams", href: "/teams", icon: TrophyIcon },
+  { label: "Officials", href: "/officials", icon: ShieldIcon },
   { label: "Messages", href: "/messages", icon: MessageIcon },
   { label: "Notifications", href: "/notifications", icon: BellIcon },
   { label: "Profile", href: "/profile", icon: UserIcon },
