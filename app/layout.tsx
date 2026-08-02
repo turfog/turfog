@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   description:
     "Instantly connect with players who want to play and teams looking for players in your area.",
   keywords: ["sports", "matches", "players", "turfog", "football", "cricket"],
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

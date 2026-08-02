@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import SignInForm from "@/components/auth/SignInForm";
 import {
-  ZapIcon,
   FootballIcon,
   UsersIcon,
   ShieldIcon,
@@ -17,13 +17,8 @@ export default function LandingAuth() {
       {/* ---------- Left: brand + tagline + collage ---------- */}
       <div className="relative flex-1 flex flex-col px-6 sm:px-10 lg:px-16 py-8 lg:py-10">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 self-start">
-          <span className="w-10 h-10 bg-primary-green rounded-xl flex items-center justify-center shadow-glow-green">
-            <ZapIcon size={22} className="text-white" />
-          </span>
-          <span className="text-body-md font-bold text-neutral-900 font-display">
-            Turfog
-          </span>
+        <Link href="/" className="self-start" aria-label="Turfog home">
+          <Logo size={40} priority />
         </Link>
 
         {/* Center content */}

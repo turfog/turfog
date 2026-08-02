@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import Logo from "@/components/Logo";
 import {
   HomeIcon,
   GamesIcon,
@@ -13,7 +14,6 @@ import {
   UserIcon,
   SettingsIcon,
   LogOutIcon,
-  ZapIcon,
 } from "@/components/SvgIcons";
 
 const navItems = [
@@ -30,13 +30,8 @@ export default function LeftNav() {
   return (
     <aside className="hidden lg:flex flex-col h-screen sticky top-0 border-r border-neutral-200 bg-white px-3 py-5">
       {/* Logo */}
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-3 mb-8">
-        <div className="w-9 h-9 bg-primary-green rounded-xl flex items-center justify-center">
-          <ZapIcon size={20} className="text-white" />
-        </div>
-        <span className="text-display-xs font-bold text-neutral-900 font-display">
-          Turfog
-        </span>
+      <Link href="/dashboard" className="px-3 mb-8 inline-flex" aria-label="Turfog home">
+        <Logo size={30} />
       </Link>
 
       {/* Nav Items */}
