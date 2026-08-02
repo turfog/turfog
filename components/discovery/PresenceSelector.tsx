@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { setMyPresence } from "@/lib/discovery";
 
 type PresenceStatus =
   | "available-now"
@@ -17,11 +18,7 @@ type PresenceStatus =
   | "tournament-ready"
   | "offline";
 
-const presenceOptions: Array<{
-  id: PresenceStatus;
-  label: string;
-  dot: string;
-}> = [
+const presenceOptions: Array<{ id: PresenceStatus; label: string; dot: string }> = [
   { id: "available-now", label: "Available now", dot: "bg-emerald" },
   { id: "in-30-min", label: "In 30 min", dot: "bg-amber" },
   { id: "today", label: "Today", dot: "bg-electric-blue" },
@@ -62,6 +59,10 @@ export default function PresenceSelector() {
     return () => clearInterval(timer);
   }, [status, duration]);
 
+  useEffect(() => {
+    void setMyPresence(status, duration);
+  }, [status, duration]);
+
   const activeOption = presenceOptions.find((o) => o.id === status);
   const hours = Math.floor(remainingSeconds / 3600);
   const mins = Math.floor((remainingSeconds % 3600) / 60);
@@ -69,22 +70,19 @@ export default function PresenceSelector() {
 
   return (
     <div className="bg-white rounded-2xl border border-neutral-200 shadow-card px-4 py-3">
-      {/* Active Status */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className={cn("w-2.5 h-2.5 rounded-full", activeOption?.dot)} />
-          <span className="text-body-xs font-semibold text-neutral-900">
-            {activeOption?.label}
-          </span>
+          <span className="text-body-xs font-semibold text-neutral-900">{activeOption?.label}</span>
         </div>
         {status !== "offline" && (
           <span className="text-caption text-neutral-400 font-mono">
-            {hours > 0 ? `${hours}h ` : ""}{mins}m {secs}s remaining
+            {hours > 0 ? `${hours}h ` : ""}
+            {mins}m {secs}s remaining
           </span>
         )}
       </div>
 
-      {/* Status Options */}
       <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-2 mb-2">
         {presenceOptions.map((option) => (
           <motion.button
@@ -98,18 +96,12 @@ export default function PresenceSelector() {
                 : "border-neutral-200 bg-white text-neutral-500 hover:border-neutral-300"
             )}
           >
-            <span
-              className={cn(
-                "w-1.5 h-1.5 rounded-full",
-                status === option.id ? "bg-white" : option.dot
-              )}
-            />
+            <span className={cn("w-1.5 h-1.5 rounded-full", status === option.id ? "bg-white" : option.dot)} />
             {option.label}
           </motion.button>
         ))}
       </div>
 
-      {/* Duration Selector */}
       {status !== "offline" && (
         <div className="flex items-center gap-2">
           <span className="text-caption text-neutral-400">Auto-expire:</span>

@@ -79,7 +79,7 @@ export default function LookingForPlayer() {
       return;
     }
     setPosting(true);
-    const created = await createMatchRequest({
+    const { data: created, error: postError } = await createMatchRequest({
       sport: selectedSport,
       playersNeeded,
       skill: selectedSkill,
@@ -93,8 +93,8 @@ export default function LookingForPlayer() {
       lng,
     });
     setPosting(false);
-    if (!created) {
-      setError("Could not post the request. Please try again.");
+    if (postError || !created) {
+      setError(postError ?? "Could not post the request. Please try again.");
       return;
     }
     setPosted(true);

@@ -1,14 +1,8 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { haversineKm, reverseGeocode } from "@/lib/discovery";
+import { haversineKm, reverseGeocode, updateMyLocation } from "@/lib/discovery";
 
 type LocationStatus = "idle" | "detecting" | "granted" | "denied" | "unavailable";
 
@@ -66,7 +60,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         if (moved) {
           lastGeo.current = { lat: la, lng: ln };
           const name = await reverseGeocode(la, ln);
-          if (mounted.current) setLabel(name ?? "Current location");
+          const resolved = name ?? "Current location";
+          if (mounted.current) setLabel(resolved);
+          void updateMyLocation(la, ln, resolved);
         }
       },
       () => {

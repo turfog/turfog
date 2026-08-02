@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Card from "@/components/ui/Card";
+import { useLocation } from "@/context/LocationContext";
+import { useDiscovery } from "@/context/DiscoveryContext";
+import type { SportId } from "@/types";
 import {
   FootballIcon,
   CricketIcon,
@@ -14,7 +17,6 @@ import {
   ZapIcon,
   ChevronRightIcon,
 } from "@/components/SvgIcons";
-import type { SportId } from "@/types";
 
 const sportIcon: Record<SportId, React.ReactNode> = {
   football: <FootballIcon size={12} />,
@@ -24,15 +26,25 @@ const sportIcon: Record<SportId, React.ReactNode> = {
   badminton: <BadmintonIcon size={12} />,
 };
 
-const dots = [
-  { sport: "football" as SportId, angle: 30, dist: 38, color: "bg-primary-green" },
-  { sport: "box-cricket" as SportId, angle: 110, dist: 52, color: "bg-electric-blue" },
-  { sport: "badminton" as SportId, angle: 185, dist: 44, color: "bg-sunset-orange" },
-  { sport: "padel" as SportId, angle: 250, dist: 58, color: "bg-amber" },
-  { sport: "pickleball" as SportId, angle: 310, dist: 64, color: "bg-emerald" },
+const sportDots: Array<{ sport: SportId; angle: number; dist: number; color: string }> = [
+  { sport: "football", angle: 30, dist: 38, color: "bg-primary-green" },
+  { sport: "box-cricket", angle: 110, dist: 52, color: "bg-electric-blue" },
+  { sport: "badminton", angle: 185, dist: 44, color: "bg-sunset-orange" },
+  { sport: "padel", angle: 250, dist: 58, color: "bg-amber" },
+  { sport: "pickleball", angle: 310, dist: 64, color: "bg-emerald" },
 ];
 
 export default function RadarMini() {
+  const { radius } = useLocation();
+  const { requests, heartbeats } = useDiscovery();
+
+  const activeSports = new Set<SportId>();
+  heartbeats.forEach((p) => activeSports.add(p.sport));
+  requests.forEach((r) => activeSports.add(r.sport));
+
+  const available = heartbeats.length;
+  const matches = requests.length;
+
   return (
     <Card padding="md">
       <div className="flex items-center justify-between mb-3">
@@ -58,17 +70,21 @@ export default function RadarMini() {
               className="block w-3 h-3 bg-electric-blue rounded-full shadow-glow-blue"
             />
           </div>
-          {dots.map((d, i) => {
+          {sportDots.map((d, i) => {
             const r = (d.angle * Math.PI) / 180;
             const x = 50 + d.dist * Math.cos(r) * 0.45;
             const y = 50 + d.dist * Math.sin(r) * 0.45;
+            const active = activeSports.has(d.sport);
             return (
               <motion.span
                 key={d.sport}
                 initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
+                animate={{ scale: active ? 1 : 0.6 }}
                 transition={{ delay: 0.2 + i * 0.08, type: "spring" }}
-                className={cn("absolute w-5 h-5 rounded-full flex items-center justify-center text-white", d.color)}
+                className={cn(
+                  "absolute w-5 h-5 rounded-full flex items-center justify-center text-white transition-opacity",
+                  active ? d.color : "bg-neutral-200 text-neutral-400 opacity-50"
+                )}
                 style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
               >
                 {sportIcon[d.sport]}
@@ -79,8 +95,8 @@ export default function RadarMini() {
       </div>
 
       <p className="text-center text-caption text-neutral-500 mb-2">
-        <span className="font-semibold text-neutral-800">46 players</span> and{" "}
-        <span className="font-semibold text-neutral-800">7 matches</span> within 5 km
+        <span className="font-semibold text-neutral-800">{available} players</span> and{" "}
+        <span className="font-semibold text-neutral-800">{matches} matches</span> within {radius} km
       </p>
       <Link href="/games" className="flex items-center justify-center gap-1 text-body-xs text-electric-blue font-medium hover:underline">
         Open full radar

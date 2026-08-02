@@ -4,12 +4,11 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import LocationBar from "@/components/discovery/LocationBar";
 import PresenceSelector from "@/components/discovery/PresenceSelector";
-import PlayersWanted from "@/components/discovery/PlayersWanted";
+import AvailablePlayers from "@/components/discovery/AvailablePlayers";
 import IWantToPlay from "@/components/heartbeat/IWantToPlay";
 import LookingForPlayer from "@/components/heartbeat/LookingForPlayer";
 import PostComposer from "@/components/feed/PostComposer";
 import SocialFeed from "@/components/feed/SocialFeed";
-import MobileNearbyScroller from "@/components/feed/MobileNearbyScroller";
 import { MOCK_POSTS } from "@/lib/mock-feed";
 import type { Player, SocialPost } from "@/types";
 
@@ -40,10 +39,7 @@ export default function HomeCenter({ player }: { player: Player }) {
         <LookingForPlayer />
       </motion.div>
       <motion.div variants={item} className="xl:hidden">
-        <PlayersWanted variant="scroller" />
-      </motion.div>
-      <motion.div variants={item}>
-        <MobileNearbyScroller />
+        <AvailablePlayers variant="scroller" />
       </motion.div>
       <motion.div variants={item}>
         <PostComposer player={player} onPost={addPost} />

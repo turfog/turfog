@@ -244,3 +244,18 @@ export interface PlayerRequest {
   teamName?: string;
   mutuals?: number;
 }
+// ----- Available players (live "I want to play" heartbeats) -----
+
+export interface AvailablePlayer {
+  id: string;
+  name: string;
+  username: string;
+  avatar: string;
+  verified: boolean;
+  sport: SportId;
+  skill: string;
+  note: string;
+  location: string;
+  distanceKm: number;
+  wentLiveAt: string;
+}

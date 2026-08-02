@@ -6,7 +6,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
-import { useMatchRequests } from "@/hooks/useMatchRequests";
+import { useDiscovery } from "@/context/DiscoveryContext";
 import type { PlayerRequest, SportId, MatchType } from "@/types";
 import {
   UsersIcon,
@@ -104,7 +104,7 @@ function score(req: PlayerRequest, now: number): number {
 }
 
 export default function PlayersWanted({ variant }: { variant: "rail" | "scroller" }) {
-  const { requests, myActions, loading, join, leave, dismiss } = useMatchRequests();
+  const { requests, myActions, loading, join, leave, dismiss } = useDiscovery();
   const [now, setNow] = useState(0);
 
   useEffect(() => {
