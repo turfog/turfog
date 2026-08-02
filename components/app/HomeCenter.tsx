@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import LocationBar from "@/components/discovery/LocationBar";
 import PresenceSelector from "@/components/discovery/PresenceSelector";
+import PlayersWanted from "@/components/discovery/PlayersWanted";
 import IWantToPlay from "@/components/heartbeat/IWantToPlay";
 import LookingForPlayer from "@/components/heartbeat/LookingForPlayer";
 import PostComposer from "@/components/feed/PostComposer";
@@ -37,6 +38,9 @@ export default function HomeCenter({ player }: { player: Player }) {
       <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <IWantToPlay />
         <LookingForPlayer />
+      </motion.div>
+      <motion.div variants={item} className="xl:hidden">
+        <PlayersWanted variant="scroller" />
       </motion.div>
       <motion.div variants={item}>
         <MobileNearbyScroller />

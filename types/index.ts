@@ -221,3 +221,26 @@ export interface SocialPost {
   savedByMe: boolean;
   nearbyWantToJoin: number;
 }
+// ----- Live players-wanted requests -----
+
+export type MatchType = "casual" | "practice" | "competitive" | "tournament";
+
+export interface PlayerRequest {
+  id: string;
+  organizerName: string;
+  organizerUsername: string;
+  organizerAvatar: string;
+  verified: boolean;
+  sport: SportId;
+  needed: number;
+  capacity: number;
+  waitlist: number;
+  kickoffAt: string;
+  venue: string;
+  area: string;
+  distanceKm: number;
+  skill: "beginner" | "intermediate" | "advanced" | "any";
+  matchType: MatchType;
+  teamName?: string;
+  mutuals?: number;
+}
