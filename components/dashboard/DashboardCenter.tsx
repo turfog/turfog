@@ -4,14 +4,16 @@ import React from "react";
 import { motion } from "framer-motion";
 import LocationBar from "@/components/discovery/LocationBar";
 import PresenceSelector from "@/components/discovery/PresenceSelector";
+import ActivityMap from "@/components/discovery/ActivityMap";
 import NearbyPlayers from "@/components/discovery/NearbyPlayers";
+import PrivacyPanel from "@/components/discovery/PrivacyPanel";
 import IWantToPlay from "@/components/heartbeat/IWantToPlay";
 import LookingForPlayer from "@/components/heartbeat/LookingForPlayer";
 import SportsFeed from "@/components/feed/SportsFeed";
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.07 } },
 };
 
 const itemVariants = {
@@ -31,12 +33,12 @@ export default function DashboardCenter() {
       animate="visible"
       className="max-w-2xl mx-auto space-y-5"
     >
-      {/* Live Location Discovery */}
+      {/* Live Location */}
       <motion.div variants={itemVariants}>
         <LocationBar />
       </motion.div>
 
-      {/* Presence Status */}
+      {/* Presence Status with Expiration */}
       <motion.div variants={itemVariants}>
         <PresenceSelector />
       </motion.div>
@@ -56,7 +58,12 @@ export default function DashboardCenter() {
         <LookingForPlayer />
       </motion.div>
 
-      {/* Live Nearby Discovery */}
+      {/* Live Sports Activity Map */}
+      <motion.div variants={itemVariants}>
+        <ActivityMap />
+      </motion.div>
+
+      {/* Nearby Players */}
       <motion.div variants={itemVariants}>
         <NearbyPlayers />
       </motion.div>
@@ -64,6 +71,11 @@ export default function DashboardCenter() {
       {/* Sports Feed */}
       <motion.div variants={itemVariants}>
         <SportsFeed />
+      </motion.div>
+
+      {/* Privacy Controls */}
+      <motion.div variants={itemVariants}>
+        <PrivacyPanel />
       </motion.div>
     </motion.div>
   );
