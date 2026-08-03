@@ -12,7 +12,7 @@ import { ArrowLeftIcon, TrophyIcon, PlusIcon, XIcon, ClockIcon, MapPinIcon, Star
 
 const SPORTS = ["football", "box-cricket", "badminton", "pickleball", "padel"];
 
-const STAT_FIELDS: Record<string, Array<{ key: keyof StatInput; label: string }>> = {
+const STAT_FIELDS: Record<string, Array<{ key: Exclude<keyof StatInput, "mvp">; label: string }>> = {
   football: [
     { key: "goals", label: "Goals" },
     { key: "assists", label: "Assists" },
