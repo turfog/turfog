@@ -12,9 +12,7 @@ import { ArrowLeftIcon, TrophyIcon, PlusIcon, XIcon, ClockIcon, MapPinIcon, Star
 
 const SPORTS = ["football", "box-cricket", "badminton", "pickleball", "padel"];
 
-type NumericStatKey = "goals" | "assists" | "runs" | "wickets" | "saves" | "points";
-
-const STAT_FIELDS: Record<string, Array<{ key: NumericStatKey; label: string }>> = {
+const STAT_FIELDS: Record<string, Array<{ key: keyof StatInput; label: string }>> = {
   football: [
     { key: "goals", label: "Goals" },
     { key: "assists", label: "Assists" },
