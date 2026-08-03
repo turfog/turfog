@@ -27,6 +27,7 @@ import type { Player } from "@/types";
 const navItems = [
   { label: "Home", href: "/", icon: HomeIcon },
   { label: "Games", href: "/games", icon: GamesIcon },
+  { label: "Tournaments", href: "/tournaments", icon: TrophyIcon },
   { label: "Communities", href: "/communities", icon: CommunityIcon },
   { label: "Teams", href: "/teams", icon: TrophyIcon },
   { label: "Officials", href: "/officials", icon: ShieldIcon },
