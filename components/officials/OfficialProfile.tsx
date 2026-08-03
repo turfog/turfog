@@ -7,8 +7,8 @@ import { cn, timeAgo } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { createClient } from "@/lib/supabase";
-import { fetchOfficialByUsername, fetchOfficialBookings, requestOfficial, respondBooking } from "@/lib/officials";
-import type { Official, OfficialBooking } from "@/lib/officials";
+import { fetchOfficialByUsername, fetchOfficialBookings, requestOfficial, respondBooking, markBookingCompleted, fetchOfficialReviews } from "@/lib/officials";
+import type { Official, OfficialBooking, OfficialReview } from "@/lib/officials";
 import type { SportId } from "@/types";
 import {
   ShieldIcon,
@@ -74,6 +74,7 @@ export default function OfficialProfile({ username }: { username: string }) {
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [bookings, setBookings] = useState<OfficialBooking[]>([]);
+  const [reviews, setReviews] = useState<OfficialReview[]>([]);
   const [showRequest, setShowRequest] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [requested, setRequested] = useState(false);
@@ -92,6 +93,7 @@ export default function OfficialProfile({ username }: { username: string }) {
       const owner = !!user && o.userId === user.id;
       setIsOwner(owner);
       if (owner) setBookings(await fetchOfficialBookings(o.id));
+      setReviews(await fetchOfficialReviews(o.id));
       setSport(o.sport);
     }
     setLoading(false);
@@ -131,6 +133,14 @@ export default function OfficialProfile({ username }: { username: string }) {
     setBusy(bookingId);
     await respondBooking(bookingId, accept);
     setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status: accept ? "accepted" : "rejected" } : b)));
+    setBusy(null);
+  };
+
+  const onMarkCompleted = async (bookingId: string) => {
+    if (busy) return;
+    setBusy(bookingId);
+    await markBookingCompleted(bookingId);
+    setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status: "completed" } : b)));
     setBusy(null);
   };
 
@@ -257,8 +267,10 @@ export default function OfficialProfile({ username }: { username: string }) {
                           <Button size="sm" variant="primary" loading={busy === b.id} onClick={() => onRespond(b.id, true)}>Accept</Button>
                           <Button size="sm" variant="outline" loading={busy === b.id} onClick={() => onRespond(b.id, false)}>Reject</Button>
                         </div>
+                      ) : b.status === "accepted" ? (
+                        <Button size="sm" variant="primary" loading={busy === b.id} onClick={() => onMarkCompleted(b.id)}>Mark completed</Button>
                       ) : (
-                        <span className={cn("px-3 py-1.5 rounded-xl text-caption font-semibold capitalize", b.status === "accepted" ? "bg-emerald/10 text-emerald" : "bg-coral/10 text-coral")}>{b.status}</span>
+                        <span className={cn("px-3 py-1.5 rounded-xl text-caption font-semibold capitalize", b.status === "completed" ? "bg-emerald/10 text-emerald" : "bg-coral/10 text-coral")}>{b.status}</span>
                       )}
                     </div>
                   </Card>
@@ -267,6 +279,29 @@ export default function OfficialProfile({ username }: { username: string }) {
             )}
           </div>
         )}
+        <div>
+          <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3">Reviews ({reviews.length})</h2>
+          {reviews.length === 0 ? (
+            <p className="text-body-xs text-neutral-400">No reviews yet. Reviews appear after completed matches.</p>
+          ) : (
+            <div className="space-y-3">
+              {reviews.map((r) => (
+                <Card key={r.id} padding="md">
+                  <div className="flex items-center justify-between gap-3 flex-wrap mb-1.5">
+                    <p className="text-body-sm font-semibold text-neutral-900">{r.reviewerName}</p>
+                    <span className="flex items-center gap-0.5 text-amber">
+                      {Array.from({ length: r.rating }).map((_, i) => (
+                        <StarIcon key={i} size={14} />
+                      ))}
+                    </span>
+                  </div>
+                  {r.comment && <p className="text-body-xs text-neutral-600">{r.comment}</p>}
+                  <p className="text-caption text-neutral-400 mt-1.5">{timeAgo(r.createdAt)}</p>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

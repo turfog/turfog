@@ -179,3 +179,97 @@ export async function respondBooking(bookingId: string, accept: boolean): Promis
   const { error } = await supabase.from("official_bookings").update({ status: accept ? "accepted" : "rejected" }).eq("id", bookingId);
   return !error;
 }
+// ----- Bookings + reviews (E3b) -----
+
+export interface MyBooking extends OfficialBooking {
+  officialName: string;
+  officialUsername: string;
+}
+
+export interface OfficialReview {
+  id: string;
+  officialId: string;
+  bookingId: string;
+  reviewerId: string;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export async function markBookingCompleted(bookingId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.from("official_bookings").update({ status: "completed" }).eq("id", bookingId);
+  return !error;
+}
+
+export async function fetchMyBookings(): Promise<MyBooking[]> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data: bookings } = await supabase.from("official_bookings").select("*").eq("requester_id", user.id).order("created_at", { ascending: false });
+  const list = (bookings ?? []) as Row[];
+  if (list.length === 0) return [];
+  const officialIds = Array.from(new Set(list.map((b) => str(b.official_id))));
+  const { data: officials } = await supabase.from("officials").select("id, display_name, username").in("id", officialIds);
+  const officialMap = new Map<string, { name: string; username: string }>(
+    ((officials ?? []) as Row[]).map((o) => [str(o.id), { name: str(o.display_name, "Official"), username: str(o.username) }])
+  );
+  return list.map((b) => {
+    const off = officialMap.get(str(b.official_id));
+    return {
+      id: str(b.id),
+      officialId: str(b.official_id),
+      requesterId: str(b.requester_id),
+      requesterName: str(b.requester_name),
+      teamName: str(b.team_name),
+      sport: str(b.sport),
+      matchDate: str(b.match_date),
+      note: str(b.note),
+      status: str(b.status, "requested"),
+      createdAt: str(b.created_at),
+      officialName: off?.name ?? "Official",
+      officialUsername: off?.username ?? "",
+    };
+  });
+}
+
+export async function fetchReviewedBookingIds(): Promise<Set<string>> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Set();
+  const { data } = await supabase.from("official_reviews").select("booking_id").eq("reviewer_id", user.id);
+  return new Set(((data ?? []) as Row[]).map((r) => str(r.booking_id)));
+}
+
+export async function submitReview(bookingId: string, officialId: string, rating: number, comment: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data: player } = await supabase.from("players").select("full_name, username").eq("auth_id", user.id).maybeSingle();
+  const p = (player ?? {}) as Row;
+  const { error } = await supabase.from("official_reviews").insert({
+    official_id: officialId,
+    booking_id: bookingId,
+    reviewer_id: user.id,
+    reviewer_name: str(p.full_name, str(p.username, "Player")),
+    rating,
+    comment,
+  });
+  return !error;
+}
+
+export async function fetchOfficialReviews(officialId: string): Promise<OfficialReview[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("official_reviews").select("*").eq("official_id", officialId).order("created_at", { ascending: false }).limit(10);
+  return ((data ?? []) as Row[]).map((r) => ({
+    id: str(r.id),
+    officialId: str(r.official_id),
+    bookingId: str(r.booking_id),
+    reviewerId: str(r.reviewer_id),
+    reviewerName: str(r.reviewer_name, "Player"),
+    rating: num(r.rating),
+    comment: str(r.comment),
+    createdAt: str(r.created_at),
+  }));
+}
