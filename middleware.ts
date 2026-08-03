@@ -13,7 +13,7 @@ const PRIVATE_SEGMENTS = new Set([
   "profile",
   "settings",
   "communities",
-  "games", "messages", "invites", "bookings",
+  "games", "messages", "invites", "bookings", "matches",
   "notifications",
   "setup-username",
   "auth",

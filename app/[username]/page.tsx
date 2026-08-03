@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { fetchProfileView } from "@/lib/profile";
 import PublicProfile from "@/components/profile/PublicProfile";
+import PerformancePanel from "@/components/matches/PerformancePanel";
 import EndorsementPanel from "@/components/endorsements/EndorsementPanel";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const name = username.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   return {
     title: `${name} - Turfog`,
-    description: `${name}'s sports identity on Turfog. Live status, matches, posts, reputation, and endorsements.`,
+    description: `${name}'s sports identity on Turfog. Live status, matches, performance, reputation, and endorsements.`,
     openGraph: { title: `${name} - Turfog`, description: `${name}'s public sports profile on Turfog.`, type: "profile" },
   };
 }
@@ -26,6 +27,7 @@ export default async function UsernamePage({ params }: { params: Promise<{ usern
   return (
     <div className="bg-neutral-100">
       <PublicProfile payload={payload} />
+      <PerformancePanel targetUserId={payload.view.id ?? ""} />
       <EndorsementPanel
         targetUserId={payload.view.id ?? ""}
         targetUsername={payload.view.username}
