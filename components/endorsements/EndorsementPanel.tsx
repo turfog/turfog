@@ -1,119 +1,110 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 import Card from "@/components/ui/Card";
-import { fetchEndorsementSummary, addEndorsement, ENDORSEMENT_CATEGORIES } from "@/lib/endorsements";
-import type { EndorsementSummary } from "@/lib/endorsements";
-import { ShieldIcon, CheckCircleIcon, UsersIcon } from "@/components/SvgIcons";
+import { fetchEndorsementsForUser, endorsePlayer, ENDORSEMENT_CATEGORIES } from "@/lib/endorsements";
+import type { EndorsementRecord } from "@/lib/endorsements";
+import { ShieldIcon } from "@/components/SvgIcons";
 
-export default function EndorsementPanel({ targetUserId, targetUsername, myId }: { targetUserId: string; targetUsername: string; myId: string | null }) {
-  const [summary, setSummary] = useState<EndorsementSummary | null>(null);
+export default function EndorsementPanel({
+  targetUserId,
+  targetUsername,
+  myId,
+}: {
+  targetUserId: string;
+  targetUsername: string;
+  myId: string | null;
+}) {
+  const [endorsements, setEndorsements] = useState<EndorsementRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!targetUserId) { setLoading(false); return; }
-    const s = await fetchEndorsementSummary(targetUserId, myId);
-    setSummary(s);
+    if (!targetUserId) {
+      setLoading(false);
+      return;
+    }
+    setEndorsements(await fetchEndorsementsForUser(targetUserId));
     setLoading(false);
-  }, [targetUserId, myId]);
+  }, [targetUserId]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  if (!targetUserId) return null;
-
-  if (loading) {
-    return (
-      <section className="max-w-3xl mx-auto px-6 pb-16">
-        <div className="bg-white rounded-2xl border border-neutral-200 p-6 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-neutral-100 animate-pulse" />
-          <div className="flex-1 space-y-2">
-            <div className="h-3 w-1/3 rounded bg-neutral-100 animate-pulse" />
-            <div className="h-2.5 w-1/2 rounded bg-neutral-100 animate-pulse" />
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (!summary) return null;
-
-  const isSelf = !!myId && myId === targetUserId;
-  const catsWithCount = ENDORSEMENT_CATEGORIES.filter((c) => (summary.byCategory[c.id] ?? 0) > 0);
+  const isOwnProfile = !!myId && myId === targetUserId;
+  const myEndorsed = new Set(
+    endorsements.filter((e) => e.endorserId === myId).map((e) => e.category)
+  );
+  const totalCount = endorsements.length;
 
   const onEndorse = async (category: string) => {
-    if (busy || !summary.eligible) return;
+    if (busy || isOwnProfile || !myId) return;
     setBusy(category);
-    await addEndorsement(targetUserId, category);
+    await endorsePlayer(targetUserId, category);
     await refresh();
     setBusy(null);
   };
 
   return (
-    <section className="max-w-3xl mx-auto px-6 pb-16">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-16">
       <Card padding="lg">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <ShieldIcon size={20} className="text-primary-green" />
-            <h2 className="text-body-md font-semibold text-neutral-900 font-display">Reputation & endorsements</h2>
-          </div>
-          <div className="text-right">
-            <p className="text-display-xs font-bold text-neutral-900">{summary.total}</p>
-            <p className="text-caption text-neutral-400">endorsements</p>
-          </div>
+          <h2 className="text-body-md font-semibold text-neutral-900 flex items-center gap-2">
+            <ShieldIcon size={18} className="text-primary-green" />
+            Endorsements
+          </h2>
+          <span className="text-body-sm font-semibold text-neutral-900">{totalCount}</span>
         </div>
 
-        {catsWithCount.length > 0 ? (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {catsWithCount.map((c) => (
-              <span key={c.id} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-green/10 text-primary-green text-caption font-semibold">
-                {c.label} x{summary.byCategory[c.id]}
-              </span>
-            ))}
-          </div>
+        {loading ? (
+          <p className="text-body-sm text-neutral-400">Loading endorsements...</p>
+        ) : totalCount === 0 ? (
+          <p className="text-body-sm text-neutral-400">
+            No endorsements yet. Be the first to endorse {targetUsername}.
+          </p>
         ) : (
-          <p className="text-body-xs text-neutral-400 mb-4">No endorsements yet.</p>
+          <div className="flex flex-wrap gap-2">
+            {ENDORSEMENT_CATEGORIES.map((category) => {
+              const count = endorsements.filter((e) => e.category === category).length;
+              if (count === 0) return null;
+              return (
+                <span
+                  key={category}
+                  className="px-3 py-1.5 rounded-full bg-primary-green/10 text-primary-green text-body-xs font-medium"
+                >
+                  {category} ({count})
+                </span>
+              );
+            })}
+          </div>
         )}
 
-        {isSelf ? (
-          <p className="text-body-xs text-neutral-500">This is your public reputation. Teammates and co-players can endorse you.</p>
-        ) : summary.eligible ? (
-          <div>
-            <p className="text-body-xs font-semibold text-neutral-700 mb-2">
-              Endorse @{targetUsername} ({summary.reason === "teammate" ? "your teammate" : "you played together"})
-            </p>
+        {!isOwnProfile && myId && (
+          <div className="mt-4 pt-4 border-t border-neutral-100">
+            <p className="text-body-xs text-neutral-500 mb-2">Endorse {targetUsername}:</p>
             <div className="flex flex-wrap gap-2">
-              {ENDORSEMENT_CATEGORIES.map((c) => {
-                const done = summary.myEndorsed.includes(c.id);
+              {ENDORSEMENT_CATEGORIES.map((category) => {
+                const endorsed = myEndorsed.has(category);
                 return (
                   <button
-                    key={c.id}
-                    disabled={done || busy === c.id}
-                    onClick={() => onEndorse(c.id)}
-                    className={cn(
-                      "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-caption font-medium border transition-all",
-                      done
-                        ? "bg-emerald/10 text-emerald border-emerald/20 cursor-default"
-                        : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-green hover:text-primary-green"
-                    )}
+                    key={category}
+                    disabled={endorsed || busy === category}
+                    onClick={() => onEndorse(category)}
+                    className={`px-3 py-1.5 rounded-full text-body-xs font-medium border transition-colors ${
+                      endorsed
+                        ? "bg-primary-green text-white border-primary-green"
+                        : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-green"
+                    }`}
                   >
-                    {done && <CheckCircleIcon size={12} />}
-                    {c.label}
+                    {category}
                   </button>
                 );
               })}
             </div>
           </div>
-        ) : (
-          <p className="flex items-center gap-1.5 text-body-xs text-neutral-500">
-            <UsersIcon size={14} />
-            Join the same team or match as @{targetUsername} to endorse them.
-          </p>
         )}
       </Card>
-    </section>
+    </div>
   );
 }
