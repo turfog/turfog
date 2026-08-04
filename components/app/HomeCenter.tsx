@@ -11,6 +11,7 @@ import IWantToPlay from "@/components/heartbeat/IWantToPlay";
 import LookingForPlayer from "@/components/heartbeat/LookingForPlayer";
 import PostComposer from "@/components/feed/PostComposer";
 import SocialFeed from "@/components/feed/SocialFeed";
+import InsightCards from "@/components/feed/InsightCards";
 import { useSocial } from "@/context/SocialContext";
 import type { Player } from "@/types";
 
@@ -30,6 +31,9 @@ export default function HomeCenter({ player }: { player: Player }) {
       <motion.div variants={item}>
         <LocationBar /></motion.div>
       <motion.div variants={item}><PresenceSelector /></motion.div>
+      <motion.div variants={item}>
+        <InsightCards />
+      </motion.div>
       <motion.div variants={item}>
         <PlayerShowcase />
       </motion.div>
