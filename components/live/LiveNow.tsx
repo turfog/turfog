@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Card from "@/components/ui/Card";
 import Avatar from "@/components/ui/Avatar";
+import { createClient } from "@/lib/supabase";
 import { fetchLivePlayers } from "@/lib/liveNow";
 import type { LivePlayer } from "@/lib/liveNow";
 import { MapPinIcon, CheckCircleIcon } from "@/components/SvgIcons";
@@ -27,9 +28,30 @@ export default function LiveNow() {
         if (showLoading) setLoading(false);
       }
     };
+
     load(true);
-    const timer = setInterval(() => load(false), 30000);
-    return () => { mounted = false; clearInterval(timer); };
+
+    // Realtime push: refetch the moment any heartbeat changes.
+    const supabase = createClient();
+    const channel = supabase
+      .channel("live-now-presence")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "heartbeats" },
+        () => {
+          void load(false);
+        }
+      )
+      .subscribe();
+
+    // Fallback poll in case realtime is unavailable.
+    const timer = setInterval(() => load(false), 60000);
+
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   if (loading) {
