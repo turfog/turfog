@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import HeroHeader from "@/components/discovery/HeroHeader";
+import LiveTicker from "@/components/discovery/LiveTicker";
 import LocationBar from "@/components/discovery/LocationBar";
 import PresenceSelector from "@/components/discovery/PresenceSelector";
 import AvailablePlayers from "@/components/discovery/AvailablePlayers";
@@ -20,7 +22,13 @@ export default function HomeCenter({ player }: { player: Player }) {
 
   return (
     <motion.div variants={container} initial="hidden" animate="visible" className="max-w-2xl mx-auto space-y-5">
-      <motion.div variants={item}><LocationBar /></motion.div>
+      <motion.div variants={item}><HeroHeader />
+      </motion.div>
+      <motion.div variants={item}>
+        <LiveTicker />
+      </motion.div>
+      <motion.div variants={item}>
+        <LocationBar /></motion.div>
       <motion.div variants={item}><PresenceSelector /></motion.div>
       <motion.div variants={item}>
         <PlayerShowcase />
