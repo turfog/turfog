@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
-import PresenceSelector from "@/components/discovery/PresenceSelector";
+import LiveRail from "@/components/live/LiveRail";
 import { useMessaging } from "@/context/MessagingContext";
 import {
   HomeIcon,
@@ -19,7 +19,6 @@ import {
   PlusIcon,
   TrophyIcon,
   ShieldIcon,
-  CalendarIcon,
   StarIcon,
 } from "@/components/SvgIcons";
 import type { Player } from "@/types";
@@ -31,7 +30,6 @@ const navItems = [
   { label: "Communities", href: "/communities", icon: CommunityIcon },
   { label: "Teams", href: "/teams", icon: TrophyIcon },
   { label: "Officials", href: "/officials", icon: ShieldIcon },
-  { label: "Bookings", href: "/bookings", icon: CalendarIcon },
   { label: "Leaderboards", href: "/leaderboards", icon: StarIcon },
   { label: "Messages", href: "/messages", icon: MessageIcon },
   { label: "Notifications", href: "/notifications", icon: BellIcon },
@@ -82,7 +80,7 @@ export default function LeftNav({ player }: { player: Player }) {
       </nav>
 
       <div className="mt-5">
-        <PresenceSelector />
+        <LiveRail />
       </div>
 
       <div className="mt-5">
