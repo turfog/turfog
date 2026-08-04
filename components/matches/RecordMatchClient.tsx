@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import { recordMatchPerformance } from "@/lib/matchResults";
+import { createClient } from "@/lib/supabase";
+import { recordMatch, logPlayerStat } from "@/lib/matches";
 import { ArrowLeftIcon, CheckCircleIcon } from "@/components/SvgIcons";
 
 const SPORTS = ["football", "box-cricket", "badminton", "pickleball", "padel"];
@@ -15,7 +16,6 @@ export default function RecordMatchClient() {
   const [teamBName, setTeamBName] = useState("");
   const [scoreA, setScoreA] = useState("");
   const [scoreB, setScoreB] = useState("");
-  const [teamSide, setTeamSide] = useState("a");
   const [goals, setGoals] = useState("");
   const [assists, setAssists] = useState("");
   const [location, setLocation] = useState("");
@@ -25,17 +25,26 @@ export default function RecordMatchClient() {
   const onSubmit = async () => {
     if (busy) return;
     setBusy(true);
-    await recordMatchPerformance({
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setBusy(false); return; }
+
+    const matchId = await recordMatch({
       sport,
       teamAName: teamAName.trim(),
       teamBName: teamBName.trim(),
       scoreA: scoreA === "" ? 0 : Number(scoreA),
       scoreB: scoreB === "" ? 0 : Number(scoreB),
-      teamSide,
-      goals: goals === "" ? 0 : Number(goals),
-      assists: assists === "" ? 0 : Number(assists),
-      location: location.trim(),
+      venue: location.trim(),
     });
+
+    if (matchId) {
+      await logPlayerStat(matchId, user.id, {
+        goals: goals === "" ? 0 : Number(goals),
+        assists: assists === "" ? 0 : Number(assists),
+      });
+    }
+
     setBusy(false);
     setDone(true);
   };
@@ -52,7 +61,7 @@ export default function RecordMatchClient() {
 
         <div>
           <h1 className="text-display-sm font-display font-bold text-neutral-900">Record a match</h1>
-          <p className="text-body-sm text-neutral-500">Log the result and your performance. It feeds the Golden Boot and leaderboards.</p>
+          <p className="text-body-sm text-neutral-500">Log the result and your performance. It feeds your profile and the Golden Boot.</p>
         </div>
 
         {done ? (
@@ -61,7 +70,8 @@ export default function RecordMatchClient() {
               <CheckCircleIcon size={20} className="text-primary-green" />
               <p className="text-body-md font-semibold text-neutral-900">Match recorded!</p>
             </div>
-            <p className="text-body-sm text-neutral-500 mt-1">Your performance has been added to the leaderboards.</p>
+            <p className="text-body-sm text-neutral-500 mt-1">Your performance now shows on your profile.</p>
+            <Link href="/profile" className="inline-block mt-3 text-body-sm text-electric-blue font-medium hover:underline">View my profile</Link>
           </Card>
         ) : (
           <Card padding="lg">
@@ -92,14 +102,6 @@ export default function RecordMatchClient() {
                 <div>
                   <label className="text-body-xs font-medium text-neutral-500 block mb-1">Score B</label>
                   <input type="number" min="0" value={scoreB} onChange={(e) => setScoreB(e.target.value)} placeholder="0" className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-body-xs font-medium text-neutral-500 block mb-1">Your team</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setTeamSide("a")} className={`px-3 py-2 rounded-xl text-body-sm font-medium border transition-colors ${teamSide === "a" ? "bg-primary-green text-white border-primary-green" : "bg-white text-neutral-600 border-neutral-200"}`}>Team A</button>
-                  <button onClick={() => setTeamSide("b")} className={`px-3 py-2 rounded-xl text-body-sm font-medium border transition-colors ${teamSide === "b" ? "bg-primary-green text-white border-primary-green" : "bg-white text-neutral-600 border-neutral-200"}`}>Team B</button>
                 </div>
               </div>
 
