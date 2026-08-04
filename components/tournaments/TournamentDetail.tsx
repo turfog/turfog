@@ -15,8 +15,11 @@ import {
   recordFixtureResult,
   computeLeagueTable,
 } from "@/lib/tournaments";
+import { generateKnockout } from "@/lib/knockout";
+import TournamentBracket from "@/components/tournaments/TournamentBracket";
+import GoldenBoot from "@/components/tournaments/GoldenBoot";
 import type { Tournament, TournamentTeam, Fixture } from "@/lib/tournaments";
-import { ArrowLeftIcon, TrophyIcon, UsersIcon, PlusIcon, CheckCircleIcon, MapPinIcon } from "@/components/SvgIcons";
+import { ArrowLeftIcon, TrophyIcon, UsersIcon, CheckCircleIcon, MapPinIcon } from "@/components/SvgIcons";
 
 export default function TournamentDetail({ slug }: { slug: string }) {
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -47,15 +50,18 @@ export default function TournamentDetail({ slug }: { slug: string }) {
   }, [refresh]);
 
   if (loading) {
-    return <div className="min-h-screen bg-neutral-100 flex items-center justify-center"><p className="text-body-sm text-neutral-400">Loading tournament...</p></div>;
+    return (
+      <div className="min-h-screen bg-neutral-100 flex items-center justify-center">
+        <p className="text-body-sm text-neutral-400">Loading tournament...</p>
+      </div>
+    );
   }
 
   if (!tournament) {
     return (
-      <div className="min-h-screen bg-neutral-100 flex flex-col items-center justify-center text-center px-6">
-        <div className="w-14 h-14 rounded-full bg-neutral-200 flex items-center justify-center mb-4"><TrophyIcon size={26} className="text-neutral-400" /></div>
-        <h1 className="text-display-xs font-bold text-neutral-900 font-display mb-2">Tournament not found</h1>
-        <Link href="/tournaments" className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-green text-white text-body-sm font-semibold rounded-xl"><ArrowLeftIcon size={16} />Browse tournaments</Link>
+      <div className="min-h-screen bg-neutral-100 flex flex-col items-center justify-center gap-3">
+        <p className="text-display-sm font-display font-semibold text-neutral-900">Tournament not found</p>
+        <Link href="/tournaments" className="text-electric-blue text-body-sm font-medium">Browse tournaments</Link>
       </div>
     );
   }
@@ -78,50 +84,73 @@ export default function TournamentDetail({ slug }: { slug: string }) {
   const onGenerate = async () => {
     if (busy) return;
     setBusy(true);
-    await generateRoundRobin(tournament.id);
+    if (tournament.format === "knockout") {
+      await generateKnockout(tournament.id);
+    } else {
+      await generateRoundRobin(tournament.id);
+    }
     setBusy(false);
     await refresh();
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100">
-      <div className="bg-white border-b border-neutral-200">
-        <div className="max-w-3xl mx-auto px-6 py-6">
-          <Link href="/tournaments" className="flex items-center gap-2 text-body-xs text-neutral-400 hover:text-neutral-600 transition-colors mb-2">
-            <ArrowLeftIcon size={14} />
+    <div className="min-h-screen bg-neutral-100 pb-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div>
+          <Link href="/tournaments" className="inline-flex items-center gap-1.5 text-body-sm text-neutral-500 hover:text-neutral-900 transition-colors">
+            <ArrowLeftIcon size={16} />
             Tournaments
           </Link>
-          <div className="flex items-center gap-2">
-            <TrophyIcon size={22} className="text-primary-green" />
-            <h1 className="text-display-sm font-bold text-neutral-900 font-display">{tournament.name}</h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-body-xs text-neutral-500 mt-1">
-            <span className="capitalize">{tournament.sport.replace("-", " ")}</span>
-            <span className="capitalize">· {tournament.format}</span>
-            {tournament.city && <span className="flex items-center gap-0.5"><MapPinIcon size={12} />{tournament.city}</span>}
-          </div>
-          {tournament.description && <p className="text-body-sm text-neutral-600 mt-2">{tournament.description}</p>}
         </div>
-      </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Registration + generate */}
+        <Card padding="lg">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary-green/10 flex items-center justify-center flex-shrink-0">
+              <TrophyIcon size={24} className="text-primary-green" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-display-sm font-display font-bold text-neutral-900">{tournament.name}</h1>
+              <p className="text-body-sm text-neutral-500">
+                <span className="capitalize">{tournament.sport}</span>
+                <span className="capitalize"> · {tournament.format}</span>
+                {tournament.city && (
+                  <span className="inline-flex items-center gap-1 ml-2">
+                    <MapPinIcon size={13} />
+                    {tournament.city}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          {tournament.description && (
+            <p className="text-body-sm text-neutral-600 mt-3">{tournament.description}</p>
+          )}
+        </Card>
+
         {tournament.status === "registration" && (
           <Card padding="lg">
-            <h3 className="text-body-sm font-semibold text-neutral-900 mb-3">Register a team</h3>
+            <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3">Register a team</h2>
             {availableToRegister.length === 0 ? (
               <p className="text-body-xs text-neutral-400">No eligible teams left to register (or you are not a member of any team).</p>
             ) : (
-              <div className="flex flex-col sm:flex-row gap-2">
-                <select value={registerTeamId} onChange={(e) => setRegisterTeamId(e.target.value)} className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm bg-white outline-none focus:border-primary-green">
+              <div className="flex gap-2">
+                <select
+                  value={registerTeamId}
+                  onChange={(e) => setRegisterTeamId(e.target.value)}
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm bg-white outline-none focus:border-primary-green"
+                >
                   <option value="">Select a team</option>
-                  {availableToRegister.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {availableToRegister.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
                 </select>
-                <Button loading={busy} disabled={!registerTeamId} onClick={onRegister}><PlusIcon size={16} />Register</Button>
+                <Button variant="primary" loading={busy} onClick={onRegister}>Register</Button>
               </div>
             )}
             {isCreator && teams.length >= 2 && (
-              <Button variant="outline" loading={busy} onClick={onGenerate} className="mt-3">Generate round-robin fixtures</Button>
+              <Button variant="outline" loading={busy} onClick={onGenerate} className="mt-3">
+                {tournament.format === "knockout" ? "Generate bracket" : "Generate round-robin fixtures"}
+              </Button>
             )}
             {isCreator && teams.length < 2 && (
               <p className="text-caption text-neutral-400 mt-2">Register at least 2 teams to generate fixtures.</p>
@@ -129,80 +158,86 @@ export default function TournamentDetail({ slug }: { slug: string }) {
           </Card>
         )}
 
-        {/* Teams */}
-        <section>
-          <div className="flex items-center gap-2 mb-3">
+        <div>
+          <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3 flex items-center gap-2">
             <UsersIcon size={18} className="text-neutral-500" />
-            <h2 className="text-body-md font-semibold text-neutral-900 font-display">Teams ({teams.length})</h2>
-          </div>
+            Teams ({teams.length})
+          </h2>
           {teams.length === 0 ? (
             <p className="text-body-xs text-neutral-400">No teams registered yet.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {teams.map((t) => (
-                <Link key={t.id} href={`/teams/${t.teamSlug}`}>
-                  <Card padding="md" className="hover:border-primary-green/30">
-                    <div className="flex items-center gap-2">
-                      <CheckCircleIcon size={16} className="text-primary-green" />
-                      <span className="text-body-sm font-semibold text-neutral-900 truncate">{t.teamName}</span>
-                    </div>
-                  </Card>
-                </Link>
+                <Card key={t.id} padding="md">
+                  <div className="flex items-center gap-2">
+                    <CheckCircleIcon size={16} className="text-primary-green flex-shrink-0" />
+                    <p className="text-body-sm font-semibold text-neutral-900 truncate">{t.teamName}</p>
+                  </div>
+                </Card>
               ))}
             </div>
           )}
-        </section>
+        </div>
 
-        {/* Fixtures */}
-        <section>
-          <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3">Fixtures ({fixtures.length})</h2>
-          {fixtures.length === 0 ? (
-            <p className="text-body-xs text-neutral-400">No fixtures yet.{tournament.status === "registration" ? " Generate them once teams are registered." : ""}</p>
-          ) : (
-            <div className="space-y-3">
-              {fixtures.map((f) => <FixtureRow key={f.id} fixture={f} canEdit={isCreator} onSaved={refresh} />)}
-            </div>
-          )}
-        </section>
-
-        {/* League table */}
-        {tournament.format === "league" && table.length > 0 && (
-          <section>
-            <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3">League table</h2>
-            <Card padding="md">
-              <div className="overflow-x-auto">
-                <table className="w-full text-body-xs">
-                  <thead>
-                    <tr className="text-neutral-400 border-b border-neutral-100">
-                      <th className="text-left py-2 pr-2 font-medium">#</th>
-                      <th className="text-left py-2 pr-2 font-medium">Team</th>
-                      <th className="text-center py-2 px-1 font-medium">P</th>
-                      <th className="text-center py-2 px-1 font-medium">W</th>
-                      <th className="text-center py-2 px-1 font-medium">D</th>
-                      <th className="text-center py-2 px-1 font-medium">L</th>
-                      <th className="text-center py-2 px-1 font-medium">GD</th>
-                      <th className="text-center py-2 pl-2 font-medium">Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {table.map((r, i) => (
-                      <tr key={r.teamId} className="border-b border-neutral-50 last:border-0">
-                        <td className="py-2 pr-2 text-neutral-500">{i + 1}</td>
-                        <td className="py-2 pr-2 font-semibold text-neutral-900">{teamNameById.get(r.teamId) ?? "Team"}</td>
-                        <td className="text-center py-2 px-1 text-neutral-600">{r.played}</td>
-                        <td className="text-center py-2 px-1 text-neutral-600">{r.won}</td>
-                        <td className="text-center py-2 px-1 text-neutral-600">{r.drawn}</td>
-                        <td className="text-center py-2 px-1 text-neutral-600">{r.lost}</td>
-                        <td className="text-center py-2 px-1 text-neutral-600">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
-                        <td className="text-center py-2 pl-2 font-bold text-neutral-900">{r.points}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        {tournament.format === "knockout" ? (
+          <div>
+            <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3">Bracket</h2>
+            {fixtures.length === 0 ? (
+              <p className="text-body-xs text-neutral-400">No bracket yet.{tournament.status === "registration" ? " Generate it once teams are registered." : ""}</p>
+            ) : (
+              <TournamentBracket tournamentId={tournament.id} canEdit={isCreator} />
+            )}
+          </div>
+        ) : (
+          <div>
+            <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3">Fixtures ({fixtures.length})</h2>
+            {fixtures.length === 0 ? (
+              <p className="text-body-xs text-neutral-400">No fixtures yet.{tournament.status === "registration" ? " Generate them once teams are registered." : ""}</p>
+            ) : (
+              <div className="space-y-3">
+                {fixtures.map((f) => <FixtureRow key={f.id} fixture={f} canEdit={isCreator} onSaved={refresh} />)}
               </div>
-            </Card>
-          </section>
+            )}
+          </div>
         )}
+
+        {tournament.format === "league" && table.length > 0 && (
+          <Card padding="lg">
+            <h2 className="text-body-md font-semibold text-neutral-900 font-display mb-3">League table</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-body-sm">
+                <thead>
+                  <tr className="text-left text-caption text-neutral-400 border-b border-neutral-200">
+                    <th className="py-2 pr-2">#</th>
+                    <th className="py-2 pr-2">Team</th>
+                    <th className="py-2 pr-2">P</th>
+                    <th className="py-2 pr-2">W</th>
+                    <th className="py-2 pr-2">D</th>
+                    <th className="py-2 pr-2">L</th>
+                    <th className="py-2 pr-2">GD</th>
+                    <th className="py-2 pr-2">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {table.map((r, i) => (
+                    <tr key={r.teamId} className="border-b border-neutral-100">
+                      <td className="py-2 pr-2">{i + 1}</td>
+                      <td className="py-2 pr-2 font-medium text-neutral-900">{teamNameById.get(r.teamId) ?? "Team"}</td>
+                      <td className="py-2 pr-2">{r.played}</td>
+                      <td className="py-2 pr-2">{r.won}</td>
+                      <td className="py-2 pr-2">{r.drawn}</td>
+                      <td className="py-2 pr-2">{r.lost}</td>
+                      <td className="py-2 pr-2">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
+                      <td className="py-2 pr-2 font-semibold">{r.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        <GoldenBoot />
       </div>
     </div>
   );
@@ -223,26 +258,38 @@ function FixtureRow({ fixture, canEdit, onSaved }: { fixture: Fixture; canEdit: 
 
   return (
     <Card padding="md">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex-1 min-w-0">
-          <p className="text-body-sm font-semibold text-neutral-900">
-            {fixture.teamAName} <span className="text-neutral-400">vs</span> {fixture.teamBName}
-          </p>
-          <p className="text-caption text-neutral-400 mt-0.5">Round {fixture.round}</p>
-        </div>
-        {fixture.status === "completed" ? (
-          <span className="text-body-sm font-bold text-neutral-900">{fixture.scoreA} - {fixture.scoreB}</span>
-        ) : canEdit ? (
-          <div className="flex items-center gap-2">
-            <input type="number" min={0} value={scoreA} onChange={(e) => setScoreA(e.target.value)} placeholder="0" className="w-14 px-2 py-1.5 rounded-lg border border-neutral-200 text-body-xs text-center outline-none focus:border-primary-green" />
-            <span className="text-neutral-400">-</span>
-            <input type="number" min={0} value={scoreB} onChange={(e) => setScoreB(e.target.value)} placeholder="0" className="w-14 px-2 py-1.5 rounded-lg border border-neutral-200 text-body-xs text-center outline-none focus:border-primary-green" />
-            <Button size="sm" variant="primary" loading={busy} onClick={save}>Save</Button>
-          </div>
-        ) : (
-          <span className="px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-500 text-caption font-semibold">Upcoming</span>
-        )}
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-body-sm text-neutral-900">
+          {fixture.teamAName} vs {fixture.teamBName}
+        </p>
+        <span className="text-caption text-neutral-400">Round {fixture.round}</span>
       </div>
+      {fixture.status === "completed" ? (
+        <p className="text-body-sm font-semibold text-neutral-900 mt-2">
+          {fixture.scoreA} - {fixture.scoreB}
+        </p>
+      ) : canEdit ? (
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="number"
+            value={scoreA}
+            onChange={(e) => setScoreA(e.target.value)}
+            placeholder="0"
+            className="w-14 px-2 py-1.5 rounded-lg border border-neutral-200 text-body-xs text-center outline-none focus:border-primary-green"
+          />
+          <span className="text-neutral-400">-</span>
+          <input
+            type="number"
+            value={scoreB}
+            onChange={(e) => setScoreB(e.target.value)}
+            placeholder="0"
+            className="w-14 px-2 py-1.5 rounded-lg border border-neutral-200 text-body-xs text-center outline-none focus:border-primary-green"
+          />
+          <Button size="sm" variant="outline" loading={busy} onClick={save}>Save</Button>
+        </div>
+      ) : (
+        <p className="text-caption text-neutral-400 mt-2">Upcoming</p>
+      )}
     </Card>
   );
 }

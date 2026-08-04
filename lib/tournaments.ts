@@ -78,7 +78,7 @@ function mapTournament(t: Row): Tournament {
   };
 }
 
-export async function createTournament(input: { name: string; sport: string; city: string; description: string; startsAt: string }): Promise<string | null> {
+export async function createTournament(input: { name: string; sport: string; city: string; description: string; startsAt: string; format?: string }): Promise<string | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -89,7 +89,7 @@ export async function createTournament(input: { name: string; sport: string; cit
       name: input.name,
       slug,
       sport: input.sport,
-      format: "league",
+      format: input.format === "knockout" ? "knockout" : "league",
       status: "registration",
       city: input.city,
       description: input.description,

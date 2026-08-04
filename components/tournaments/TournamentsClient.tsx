@@ -35,6 +35,7 @@ export default function TournamentsClient() {
 
   const [name, setName] = useState("");
   const [sport, setSport] = useState("football");
+  const [format, setFormat] = useState<"league" | "knockout">("league");
   const [city, setCity] = useState("");
   const [description, setDescription] = useState("");
   const [startsAt, setStartsAt] = useState("");
@@ -51,7 +52,7 @@ export default function TournamentsClient() {
   const onCreate = async () => {
     if (busy || !name.trim()) return;
     setBusy(true);
-    await createTournament({ name: name.trim(), sport, city: city.trim(), description: description.trim(), startsAt });
+    await createTournament({ name: name.trim(), sport, city: city.trim(), description: description.trim(), startsAt, format });
     setBusy(false);
     setShowCreate(false);
     setName(""); setCity(""); setDescription(""); setStartsAt("");
@@ -83,12 +84,28 @@ export default function TournamentsClient() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
         {showCreate && (
           <Card padding="lg">
-            <h3 className="text-body-sm font-semibold text-neutral-900 mb-3">Create a league tournament</h3>
+            <h3 className="text-body-sm font-semibold text-neutral-900 mb-3">Create a tournament</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tournament name" className="px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green placeholder:text-neutral-400" />
               <select value={sport} onChange={(e) => setSport(e.target.value)} className="px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm bg-white outline-none focus:border-primary-green capitalize">
                 {SPORTS.map((s) => <option key={s} value={s}>{s.replace("-", " ")}</option>)}
               </select>
+              <div className="flex gap-2 sm:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => setFormat("league")}
+                  className={`flex-1 px-3.5 py-2.5 rounded-xl border text-body-sm font-medium transition-colors ${format === "league" ? "bg-primary-green text-white border-primary-green" : "bg-white text-neutral-600 border-neutral-200"}`}
+                >
+                  League
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormat("knockout")}
+                  className={`flex-1 px-3.5 py-2.5 rounded-xl border text-body-sm font-medium transition-colors ${format === "knockout" ? "bg-primary-green text-white border-primary-green" : "bg-white text-neutral-600 border-neutral-200"}`}
+                >
+                  Knockout
+                </button>
+              </div>
               <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green placeholder:text-neutral-400" />
               <input type="date" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green" />
             </div>
