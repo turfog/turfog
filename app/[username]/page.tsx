@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { fetchProfileView } from "@/lib/profile";
 import PublicProfile from "@/components/profile/PublicProfile";
 import PerformancePanel from "@/components/matches/PerformancePanel";
+import RecentForm from "@/components/matches/RecentForm";
 import EndorsementPanel from "@/components/endorsements/EndorsementPanel";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function UsernamePage({ params }: { params: Promise<{ usern
     <div className="bg-neutral-100">
       <PublicProfile payload={payload} />
       <PerformancePanel targetUserId={payload.view.id ?? ""} />
+      <RecentForm targetUserId={payload.view.id ?? ""} />
       <EndorsementPanel
         targetUserId={payload.view.id ?? ""}
         targetUsername={payload.view.username}
