@@ -8,6 +8,8 @@ import Button from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase";
 import { recordMatch, fetchMatches, logPlayerStat } from "@/lib/matches";
 import type { Match, StatInput } from "@/lib/matches";
+import { fetchMatchStats } from "@/lib/matchHistory";
+import type { MatchPlayerStat } from "@/lib/matchHistory";
 import { ArrowLeftIcon, TrophyIcon, PlusIcon, XIcon, ClockIcon, MapPinIcon, StarIcon, CheckCircleIcon } from "@/components/SvgIcons";
 
 const SPORTS = ["football", "box-cricket", "badminton", "pickleball", "padel"];
@@ -34,8 +36,24 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function formatStatLine(s: MatchPlayerStat, sport: string): string {
+  const parts: string[] = [];
+  if (sport === "football") {
+    if (s.goals > 0) parts.push(`${s.goals} goal${s.goals === 1 ? "" : "s"}`);
+    if (s.assists > 0) parts.push(`${s.assists} assist${s.assists === 1 ? "" : "s"}`);
+    if (s.saves > 0) parts.push(`${s.saves} save${s.saves === 1 ? "" : "s"}`);
+  } else if (sport === "box-cricket") {
+    if (s.runs > 0) parts.push(`${s.runs} run${s.runs === 1 ? "" : "s"}`);
+    if (s.wickets > 0) parts.push(`${s.wickets} wicket${s.wickets === 1 ? "" : "s"}`);
+  } else {
+    if (s.points > 0) parts.push(`${s.points} point${s.points === 1 ? "" : "s"}`);
+  }
+  return parts.length > 0 ? parts.join(", ") : "played";
+}
+
 export default function MatchesHubClient() {
   const [matches, setMatches] = useState<Match[]>([]);
+  const [matchStats, setMatchStats] = useState<Record<string, MatchPlayerStat[]>>({});
   const [loading, setLoading] = useState(true);
   const [myId, setMyId] = useState<string | null>(null);
   const [showRecord, setShowRecord] = useState(false);
@@ -49,7 +67,15 @@ export default function MatchesHubClient() {
   const [venue, setVenue] = useState("");
 
   const refresh = useCallback(async () => {
-    setMatches(await fetchMatches());
+    const ms = await fetchMatches();
+    setMatches(ms);
+    const allStats = await fetchMatchStats(ms.map((m) => m.id));
+    const grouped: Record<string, MatchPlayerStat[]> = {};
+    allStats.forEach((s) => {
+      if (!grouped[s.matchId]) grouped[s.matchId] = [];
+      grouped[s.matchId].push(s);
+    });
+    setMatchStats(grouped);
     setLoading(false);
   }, []);
 
@@ -125,16 +151,18 @@ export default function MatchesHubClient() {
             <p className="text-caption text-neutral-400 mt-1">Record a result to start tracking performance.</p>
           </div>
         ) : (
-          matches.map((m) => <MatchRow key={m.id} match={m} myId={myId} />)
+          matches.map((m) => (
+            <MatchRow key={m.id} match={m} myId={myId} stats={matchStats[m.id] ?? []} onStatsSaved={refresh} />
+          ))
         )}
       </div>
     </div>
   );
 }
 
-function MatchRow({ match, myId }: { match: Match; myId: string | null }) {
+function MatchRow({ match, myId, stats, onStatsSaved }: { match: Match; myId: string | null; stats: MatchPlayerStat[]; onStatsSaved: () => void }) {
   const [open, setOpen] = useState(false);
-  const [stats, setStats] = useState<StatInput>({});
+  const [statInput, setStatInput] = useState<StatInput>({});
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const fields = STAT_FIELDS[match.sport] ?? [];
@@ -142,10 +170,11 @@ function MatchRow({ match, myId }: { match: Match; myId: string | null }) {
   const onSave = async () => {
     if (busy || !myId) return;
     setBusy(true);
-    await logPlayerStat(match.id, myId, stats);
+    await logPlayerStat(match.id, myId, statInput);
     setBusy(false);
     setSaved(true);
     setOpen(false);
+    onStatsSaved();
   };
 
   return (
@@ -179,8 +208,8 @@ function MatchRow({ match, myId }: { match: Match; myId: string | null }) {
                 <input
                   type="number"
                   min={0}
-                  value={stats[f.key] ?? 0}
-                  onChange={(e) => setStats((prev) => ({ ...prev, [f.key]: Number(e.target.value) }))}
+                  value={statInput[f.key] ?? 0}
+                  onChange={(e) => setStatInput((prev) => ({ ...prev, [f.key]: Number(e.target.value) }))}
                   className="w-20 px-3 py-2 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green"
                 />
               </div>
@@ -188,15 +217,32 @@ function MatchRow({ match, myId }: { match: Match; myId: string | null }) {
             <div>
               <label className="text-caption text-neutral-500 mb-1 block">MVP</label>
               <button
-                onClick={() => setStats((prev) => ({ ...prev, mvp: !prev.mvp }))}
-                className={cn("inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-body-xs font-medium transition-all", stats.mvp ? "bg-amber/10 text-amber border-amber/30" : "bg-white text-neutral-600 border-neutral-200")}
+                onClick={() => setStatInput((prev) => ({ ...prev, mvp: !prev.mvp }))}
+                className={cn("inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-body-xs font-medium transition-all", statInput.mvp ? "bg-amber/10 text-amber border-amber/30" : "bg-white text-neutral-600 border-neutral-200")}
               >
                 <StarIcon size={14} />
-                {stats.mvp ? "MVP" : "Not MVP"}
+                {statInput.mvp ? "MVP" : "Not MVP"}
               </button>
             </div>
           </div>
           <Button size="sm" variant="primary" loading={busy} onClick={onSave}>Save stats</Button>
+        </div>
+      )}
+
+      {stats.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-neutral-100 space-y-2">
+          <p className="text-caption font-semibold text-neutral-500 uppercase tracking-wide">Player performance</p>
+          {stats.map((s) => (
+            <div key={s.userId} className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {s.mvp && <StarIcon size={13} className="text-amber flex-shrink-0" />}
+                <Link href={`/${s.username}`} className="text-body-xs font-medium text-neutral-900 hover:text-primary-green truncate">
+                  {s.name}
+                </Link>
+              </div>
+              <span className="text-caption text-neutral-400 flex-shrink-0">{formatStatLine(s, match.sport)}</span>
+            </div>
+          ))}
         </div>
       )}
     </Card>
