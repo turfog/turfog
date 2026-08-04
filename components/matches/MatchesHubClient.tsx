@@ -152,7 +152,9 @@ export default function MatchesHubClient() {
           </div>
         ) : (
           matches.map((m) => (
-            <MatchRow key={m.id} match={m} myId={myId} stats={matchStats[m.id] ?? []} onStatsSaved={refresh} />
+            <Link key={m.id} href={`/matches/${m.id}`}>
+              <MatchRow match={m} myId={myId} stats={matchStats[m.id] ?? []} onStatsSaved={refresh} />
+            </Link>
           ))
         )}
       </div>
