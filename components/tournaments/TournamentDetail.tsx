@@ -14,6 +14,7 @@ import {
   generateRoundRobin,
   recordFixtureResult,
   computeLeagueTable,
+  computeChampion,
 } from "@/lib/tournaments";
 import { generateKnockout } from "@/lib/knockout";
 import TournamentBracket from "@/components/tournaments/TournamentBracket";
@@ -71,6 +72,7 @@ export default function TournamentDetail({ slug }: { slug: string }) {
   const availableToRegister = myTeams.filter((t) => !registeredTeamIds.has(t.id));
   const table = tournament.format === "league" ? computeLeagueTable(fixtures) : [];
   const teamNameById = new Map(teams.map((t) => [t.teamId, t.teamName]));
+  const champion = computeChampion(fixtures, teamNameById);
 
   const onRegister = async () => {
     if (busy || !registerTeamId) return;
@@ -126,6 +128,18 @@ export default function TournamentDetail({ slug }: { slug: string }) {
             <p className="text-body-sm text-neutral-600 mt-3">{tournament.description}</p>
           )}
         </Card>
+
+        {champion && (
+          <div className="rounded-2xl bg-gradient-to-r from-gold/20 via-gold/10 to-gold/20 border border-gold/30 p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center flex-shrink-0">
+              <TrophyIcon size={26} className="text-gold" />
+            </div>
+            <div>
+              <p className="text-caption font-semibold text-gold uppercase tracking-wide">Champion</p>
+              <p className="text-body-lg font-display font-bold text-neutral-900">{champion}</p>
+            </div>
+          </div>
+        )}
 
         {tournament.status === "registration" && (
           <Card padding="lg">

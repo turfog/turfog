@@ -229,3 +229,11 @@ export function computeLeagueTable(fixtures: Fixture[]): TableRow[] {
   rows.sort((x, y) => y.points - x.points || y.gd - x.gd || y.gf - x.gf);
   return rows;
 }
+export function computeChampion(fixtures: Fixture[], teamNameById: Map<string, string>): string | null {
+  if (fixtures.length === 0) return null;
+  const maxRound = Math.max(...fixtures.map((f) => f.round));
+  const finalFixture = fixtures.find((f) => f.round === maxRound);
+  if (!finalFixture || finalFixture.status !== "completed") return null;
+  const winnerId = finalFixture.scoreA > finalFixture.scoreB ? finalFixture.teamAId : finalFixture.teamBId;
+  return teamNameById.get(winnerId) ?? null;
+}
