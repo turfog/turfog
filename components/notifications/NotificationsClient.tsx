@@ -5,16 +5,18 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { cn, timeAgo } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
-import { fetchNotifications } from "@/lib/notifications";
+import { fetchNotifications, markNotificationsRead } from "@/lib/notifications";
 import type { NotificationItem } from "@/lib/notifications";
 import { HeartIcon, CommentIcon, UsersIcon, RunIcon, BellIcon, ArrowLeftIcon, TrophyIcon } from "@/components/SvgIcons";
 
-function iconFor(t: NotificationItem["type"]): { Icon: (p: { size?: number; className?: string }) => React.ReactNode; cls: string } {
+function iconFor(t: string): { Icon: (p: { size?: number; className?: string }) => React.ReactNode; cls: string } {
   switch (t) {
     case "like": return { Icon: HeartIcon, cls: "bg-coral/10 text-coral" };
     case "comment": return { Icon: CommentIcon, cls: "bg-electric-blue/10 text-electric-blue" };
     case "follow": return { Icon: UsersIcon, cls: "bg-primary-green/10 text-primary-green" };
     case "team-invite": return { Icon: TrophyIcon, cls: "bg-amber/10 text-amber" };
+    case "endorsement": return { Icon: TrophyIcon, cls: "bg-purple-500/10 text-purple-500" };
+    case "match-join": return { Icon: RunIcon, cls: "bg-sunset-orange/10 text-sunset-orange" };
     default: return { Icon: RunIcon, cls: "bg-sunset-orange/10 text-sunset-orange" };
   }
 }
@@ -24,7 +26,11 @@ export default function NotificationsClient() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchNotifications().then((r) => { setItems(r); setLoading(false); });
+    fetchNotifications().then((r) => {
+      setItems(r);
+      setLoading(false);
+      markNotificationsRead();
+    });
   }, []);
 
   return (
@@ -74,7 +80,7 @@ export default function NotificationsClient() {
             return (
               <motion.div key={n.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                 <Link href={n.href}>
-                  <div className="bg-white rounded-2xl border border-neutral-200 shadow-card p-4 flex items-start gap-3 hover:border-neutral-300 transition-colors">
+                  <div className={cn("bg-white rounded-2xl border shadow-card p-4 flex items-start gap-3 hover:border-neutral-300 transition-colors", n.read ? "border-neutral-200" : "border-primary-green/30")}>
                     <div className="relative flex-shrink-0">
                       <Avatar alt={n.actorName} src={n.actorAvatar} size="md" />
                       <span className={cn("absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white", cls)}>
@@ -87,6 +93,7 @@ export default function NotificationsClient() {
                       </p>
                       <p className="text-caption text-neutral-400 mt-0.5">{timeAgo(n.createdAt)}</p>
                     </div>
+                    {!n.read && <span className="w-2 h-2 rounded-full bg-primary-green flex-shrink-0 mt-1.5" />}
                   </div>
                 </Link>
               </motion.div>
