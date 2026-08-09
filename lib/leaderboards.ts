@@ -37,7 +37,7 @@ interface Base {
 export async function fetchLeaderboards(): Promise<Leaderboards> {
   const supabase = createClient();
   const [playersRes, postsRes, partsRes, reqsRes, membersRes] = await Promise.all([
-    supabase.from("players").select("auth_id, username, full_name, profile_photo, verification_status, city, followers_count, reliability_score, presence").limit(500),
+    supabase.from("players").select("auth_id, username, full_name, profile_photo, verification_status, city, followers_count, reliability_score, presence_status").limit(500),
     supabase.from("posts").select("author_id").limit(2000),
     supabase.from("match_request_participants").select("user_id").eq("status", "joined").limit(2000),
     supabase.from("match_requests").select("organizer_id").limit(2000),
@@ -56,7 +56,7 @@ export async function fetchLeaderboards(): Promise<Leaderboards> {
       city: str(p.city),
       followers: num(p.followers_count),
       reliability: num(p.reliability_score, 0),
-      presence: str(p.presence),
+      presence: str(p.presence_status),
     });
   });
 

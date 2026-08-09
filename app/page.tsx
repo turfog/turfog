@@ -36,5 +36,9 @@ export default async function Home() {
     redirect("/setup-username");
   }
 
+  if (!(player as Record<string, unknown>).onboarded_at) {
+    redirect("/onboarding");
+  }
+
   return <AppShell player={player as Player} />;
 }

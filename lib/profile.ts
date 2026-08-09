@@ -175,6 +175,7 @@ export async function fetchProfileView(username: string, viewerId: string | null
 
   heartbeats.forEach((h) => { const s = str(h.sport); if (s) sportSet.add(s); });
   if (sportSet.size === 0) postList.forEach((p) => { const s = str(p.sport); if (s) sportSet.add(s); });
+  if (player) { const stored = (player as Row).sports; if (Array.isArray(stored)) stored.forEach((sv) => { const v = str(sv); if (v) sportSet.add(v); }); }
   const sports = Array.from(sportSet);
   const primarySport = sports.map(safeSportId).find((s): s is SportId => s !== null) ?? null;
 
