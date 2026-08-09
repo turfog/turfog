@@ -6,11 +6,13 @@ import Avatar from "@/components/ui/Avatar";
 import { SearchIcon, BellIcon, MessageIcon } from "@/components/SvgIcons";
 import { useSearch } from "@/context/SearchContext";
 import { useMessaging } from "@/context/MessagingContext";
+import { useLocation } from "@/context/LocationContext";
 import type { Player } from "@/types";
 
 export default function TopBar({ player }: { player: Player }) {
   const { setOpen } = useSearch();
   const { totalUnread } = useMessaging();
+  const { radius } = useLocation();
 
   return (
     <header className="sticky top-0 z-50 h-16 bg-white/85 backdrop-blur-2xl border-b border-neutral-200/60">
@@ -51,6 +53,18 @@ export default function TopBar({ player }: { player: Player }) {
               </span>
             )}
           </Link>
+
+          <div
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 mx-0.5 rounded-full bg-emerald/10 text-emerald text-caption font-semibold"
+            title="Your live location is active"
+          >
+            <span className="relative flex h-2 w-2 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald opacity-70" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald" />
+            </span>
+            <span className="whitespace-nowrap">Live</span>
+            {radius ? <span className="hidden lg:inline whitespace-nowrap">· {radius} km</span> : null}
+          </div>
 
           <Link
             href="/notifications"
