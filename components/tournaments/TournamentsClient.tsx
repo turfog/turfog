@@ -5,6 +5,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import EmptyState from "@/components/ui/EmptyState";
+import Skeleton from "@/components/ui/Skeleton";
 import { fetchTournaments, createTournament } from "@/lib/tournaments";
 import type { Tournament } from "@/lib/tournaments";
 import { ArrowLeftIcon, TrophyIcon, PlusIcon, XIcon, MapPinIcon, CalendarIcon } from "@/components/SvgIcons";
@@ -25,6 +27,23 @@ function formatDate(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return "";
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function TournamentSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-card p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-11 h-11 rounded-xl flex-shrink-0" />
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-2.5 w-40" />
+          </div>
+        </div>
+        <Skeleton className="h-6 w-20 rounded-full flex-shrink-0" />
+      </div>
+    </div>
+  );
 }
 
 export default function TournamentsClient() {
@@ -115,20 +134,27 @@ export default function TournamentsClient() {
         )}
 
         {loading ? (
-          <p className="text-center py-12 text-body-sm text-neutral-400">Loading tournaments...</p>
-        ) : tournaments.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-3"><TrophyIcon size={26} className="text-neutral-300" /></div>
-            <p className="text-body-sm text-neutral-500">No tournaments yet</p>
-            <p className="text-caption text-neutral-400 mt-1">Create the first league and invite teams.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TournamentSkeleton />
+            <TournamentSkeleton />
+            <TournamentSkeleton />
+            <TournamentSkeleton />
           </div>
+        ) : tournaments.length === 0 ? (
+          <Card padding="lg">
+            <EmptyState
+              icon={<TrophyIcon size={24} />}
+              title="No tournaments yet"
+              description="Create the first league and invite teams to compete."
+            />
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tournaments.map((t) => {
               const sm = statusMeta(t.status);
               return (
                 <Link key={t.id} href={`/tournaments/${t.slug}`}>
-                  <Card padding="md" className="hover:border-primary-green/30 h-full">
+                  <Card padding="md" className="hover:border-primary-green/30 hover:-translate-y-0.5 hover:shadow-card-hover h-full">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="w-11 h-11 rounded-xl bg-primary-green/10 text-primary-green flex items-center justify-center flex-shrink-0"><TrophyIcon size={22} /></div>
