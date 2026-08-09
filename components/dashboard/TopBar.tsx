@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import Avatar from "@/components/ui/Avatar";
+import { createClient } from "@/lib/supabase";
 import { SearchIcon, BellIcon, MessageIcon } from "@/components/SvgIcons";
 import { useSearch } from "@/context/SearchContext";
 import { useMessaging } from "@/context/MessagingContext";
@@ -26,10 +27,18 @@ export default function TopBar({ player }: { player: Player }) {
     const interval = setInterval(load, 30000);
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("topbar-notifications")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, () => { load(); })
+      .subscribe();
+
     return () => {
       mounted = false;
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
     };
   }, []);
 
