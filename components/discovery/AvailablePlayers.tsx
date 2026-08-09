@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { cn, timeAgo } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
+import Skeleton from "@/components/ui/Skeleton";
 import { useDiscovery } from "@/context/DiscoveryContext";
 import { useSocial } from "@/context/SocialContext";
 import type { AvailablePlayer, SportId } from "@/types";
@@ -132,7 +133,24 @@ export default function AvailablePlayers({ variant }: { variant: "rail" | "scrol
       {variant === "rail" && <p className="text-caption text-neutral-400 -mt-1 mb-3">Players ready to play near you</p>}
 
       {loading ? (
-        <div className="text-center py-8 text-body-xs text-neutral-400">Loading live players...</div>
+        <div className="space-y-3">
+          {[0, 1].map((i) => (
+            <div key={i} className="bg-white rounded-2xl border border-neutral-200/80 shadow-card p-3.5 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <Skeleton className="w-9 h-9 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-2.5 w-1/3" />
+                  <Skeleton className="h-2 w-1/4" />
+                </div>
+              </div>
+              <div className="flex gap-1.5">
+                <Skeleton className="h-5 w-16 rounded-md" />
+                <Skeleton className="h-5 w-14 rounded-md" />
+              </div>
+              <Skeleton className="h-9 w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
       ) : heartbeats.length === 0 ? (
         <div className="text-center py-8 text-body-xs text-neutral-400">No one is live right now. Be the first to go live.</div>
       ) : variant === "rail" ? (

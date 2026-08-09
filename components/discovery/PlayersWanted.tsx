@@ -6,6 +6,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
+import Skeleton from "@/components/ui/Skeleton";
 import { useDiscovery } from "@/context/DiscoveryContext";
 import type { PlayerRequest, SportId, MatchType } from "@/types";
 import {
@@ -298,7 +299,21 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
       )}
 
       {loading ? (
-        <div className="text-center py-8 text-body-xs text-neutral-400">Loading live requests...</div>
+        <div className="space-y-3">
+          {[0, 1].map((i) => (
+            <div key={i} className="bg-white rounded-2xl border border-neutral-200/80 shadow-card p-3.5 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <Skeleton className="w-9 h-9 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-2.5 w-1/3" />
+                  <Skeleton className="h-2 w-1/4" />
+                </div>
+              </div>
+              <Skeleton className="h-2.5 w-full" />
+              <Skeleton className="h-9 w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
       ) : visible.length === 0 ? (
         <div className="text-center py-8 text-body-xs text-neutral-400">
           No live requests nearby. Post one from the centre panel.
