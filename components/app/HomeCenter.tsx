@@ -22,11 +22,11 @@ export default function HomeCenter({ player }: { player: Player }) {
   const social = useSocial();
   return (
     <motion.div variants={container} initial="hidden" animate="visible" className="max-w-2xl mx-auto space-y-5">
-      <motion.div variants={item}><HeroHeader /></motion.div>
       <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <IWantToPlay />
         <LookingForPlayer />
       </motion.div>
+      <motion.div variants={item}><HeroHeader /></motion.div>
       <motion.div variants={item}><PresenceSelector /></motion.div>
       <motion.div variants={item}><LocationBar /></motion.div>
       <motion.div variants={item}><LiveTicker /></motion.div>
