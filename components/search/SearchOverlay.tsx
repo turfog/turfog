@@ -217,7 +217,7 @@ export default function SearchOverlay() {
                 <Section label="Players">
                   {results.players.map((p, i) => (
                     <Row key={p.id} idx={i} activeIdx={active} onHover={setActive} onClick={() => go(`/${p.username}`)}>
-                      <Avatar alt={p.fullName} src={p.avatar} size="sm" online={p.presence === "available-now"} />
+                      <Avatar alt={p.fullName} src={p.avatar} size="sm" presence={p.presence} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
                           <span className="text-body-sm font-semibold text-neutral-900 truncate">{p.fullName}</span>
