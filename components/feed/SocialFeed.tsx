@@ -5,6 +5,9 @@ import { AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSocial } from "@/context/SocialContext";
 import PostCard from "@/components/feed/PostCard";
+import EmptyState from "@/components/ui/EmptyState";
+import Skeleton from "@/components/ui/Skeleton";
+import { UsersIcon } from "@/components/SvgIcons";
 
 const TABS = [
   { id: "for-you", label: "For you" },
@@ -13,6 +16,25 @@ const TABS = [
 ] as const;
 
 type Tab = (typeof TABS)[number]["id"];
+
+function PostSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-card p-4 space-y-3">
+      <div className="flex items-center gap-3">
+        <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-3 w-1/3" />
+          <Skeleton className="h-2.5 w-1/4" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-5/6" />
+      </div>
+      <Skeleton className="h-9 w-full rounded-xl" />
+    </div>
+  );
+}
 
 export default function SocialFeed() {
   const { posts, loading, isFollowing } = useSocial();
@@ -48,10 +70,29 @@ export default function SocialFeed() {
       </div>
       <div className="space-y-4">
         {loading ? (
-          <div className="text-center py-12 text-body-sm text-neutral-400">Loading your feed...</div>
+          <>
+            <PostSkeleton />
+            <PostSkeleton />
+          </>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-body-sm text-neutral-400">
-            {tab === "following" ? "Follow players to see their posts here." : "No posts yet. Be the first to share a moment."}
+          <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-card">
+            <EmptyState
+              icon={<UsersIcon size={24} />}
+              title={
+                tab === "following"
+                  ? "No posts from players you follow"
+                  : tab === "media"
+                  ? "No media posts yet"
+                  : "No posts yet"
+              }
+              description={
+                tab === "following"
+                  ? "Follow players to see their match moments here."
+                  : tab === "media"
+                  ? "Posts with photos and videos will show up here."
+                  : "Be the first to share a moment with your community."
+              }
+            />
           </div>
         ) : (
           <AnimatePresence initial={false}>
