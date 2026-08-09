@@ -6,6 +6,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import EmptyState from "@/components/ui/EmptyState";
+import Skeleton from "@/components/ui/Skeleton";
 import { createClient } from "@/lib/supabase";
 import { fetchTeams, joinTeam, createTeam } from "@/lib/teams";
 import type { Team } from "@/lib/teams";
@@ -57,6 +59,22 @@ const SPORT_OPTIONS: Array<{ id: SportId; name: string }> = [
   { id: "pickleball", name: "Pickleball" },
   { id: "padel", name: "Padel" },
 ];
+
+function TeamSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-card overflow-hidden">
+      <Skeleton className="h-20 w-full rounded-none" />
+      <div className="p-4 pt-7 space-y-3">
+        <Skeleton className="h-3 w-1/2" />
+        <Skeleton className="h-2.5 w-full" />
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-2.5 w-2/5" />
+          <Skeleton className="h-8 w-16 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function TeamsClient() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -170,18 +188,25 @@ export default function TeamsClient() {
         </div>
 
         {loading ? (
-          <p className="text-center py-12 text-body-sm text-neutral-400">Loading teams...</p>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-3"><TrophyIcon size={22} className="text-neutral-300" /></div>
-            <p className="text-body-sm text-neutral-500">No teams for this sport yet.</p>
-            <p className="text-caption text-neutral-400 mt-1">Create the first one.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TeamSkeleton />
+            <TeamSkeleton />
+            <TeamSkeleton />
+            <TeamSkeleton />
           </div>
+        ) : filtered.length === 0 ? (
+          <Card padding="lg">
+            <EmptyState
+              icon={<TrophyIcon size={24} />}
+              title="No teams for this sport yet"
+              description="Create the first one and start building your roster."
+            />
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map((t) => (
               <motion.div key={t.id} whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 300, damping: 24 }}>
-                <Card padding="none" className="overflow-hidden hover:border-primary-green/30">
+                <Card padding="none" className="overflow-hidden hover:border-primary-green/30 hover:shadow-card-hover">
                   <div className={cn("relative h-20 bg-gradient-to-r", coverBySport[t.sport])}>
                     <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-xl bg-white shadow-card flex items-center justify-center text-primary-green border border-neutral-100">
                       {t.logo ? <img src={t.logo} alt={t.name} className="w-full h-full object-cover rounded-xl" /> : <TrophyIcon size={22} />}
