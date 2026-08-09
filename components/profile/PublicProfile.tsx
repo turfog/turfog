@@ -152,7 +152,7 @@ export default function PublicProfile({ payload }: { payload: ProfilePayload }) 
         </div>
 
         <div className="max-w-3xl mx-auto px-6">
-          <div className="relative -mt-14 mb-4 flex items-end justify-between gap-4">
+          <div className="relative -mt-14 mb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
             <div className="flex items-end gap-4">
               <Avatar alt={view.fullName} src={view.avatar} size="xl" online={view.presence === "available-now"} className="border-4 border-white shadow-lg" />
               <div className="pb-1">
@@ -161,9 +161,18 @@ export default function PublicProfile({ payload }: { payload: ProfilePayload }) 
                   {view.verified && <CheckCircleIcon size={18} className="text-electric-blue" />}
                 </div>
                 <p className="text-body-xs text-neutral-500">@{view.username}</p>
+                {view.presence === "available-now" && (
+                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald/10 text-emerald text-caption font-semibold w-fit">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald opacity-70" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald" />
+                    </span>
+                    Live now
+                  </span>
+                )}
               </div>
             </div>
-            <div className="pb-2 flex gap-2">
+            <div className="flex gap-2 sm:pb-2">
               {isMe ? (
                 <Link href="/settings">
                   <span className="px-4 py-2 rounded-xl border border-neutral-200 text-body-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors">Edit profile</span>
@@ -215,7 +224,7 @@ export default function PublicProfile({ payload }: { payload: ProfilePayload }) 
       <motion.div variants={reveal} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto px-6 mb-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {stats.map((s) => (
-            <motion.div key={s.label} whileHover={{ y: -3 }} className="bg-white rounded-2xl border border-neutral-200 shadow-card p-4 text-center">
+            <motion.div key={s.label} whileHover={{ y: -3 }} className="bg-white rounded-2xl border border-neutral-200/80 shadow-card p-4 text-center">
               <s.Icon size={20} className={cn(s.color, "mx-auto mb-2")} />
               <p className="text-display-xs font-bold text-neutral-900">
                 {s.fixed ? view.reliability.toFixed(1) : <CountUp value={s.value} />}
@@ -269,7 +278,7 @@ function safeSportIdLocal(v: string): SportId | null {
 
 function PostTile({ post }: { post: ProfilePost }) {
   return (
-    <motion.article whileHover={{ y: -2 }} transition={{ type: "spring", stiffness: 300, damping: 24 }} className="bg-white rounded-2xl border border-neutral-200 shadow-card overflow-hidden">
+    <motion.article whileHover={{ y: -2 }} transition={{ type: "spring", stiffness: 300, damping: 24 }} className="bg-white rounded-2xl border border-neutral-200/80 shadow-card overflow-hidden">
       <div className="p-4">
         {post.text && <p className="text-body-sm text-neutral-700 whitespace-pre-line">{post.text}</p>}
         {post.location && <p className="flex items-center gap-1 text-caption text-neutral-400 mt-1.5"><MapPinIcon size={12} />{post.location}</p>}
@@ -294,7 +303,7 @@ function PostTile({ post }: { post: ProfilePost }) {
 function MatchTile({ match }: { match: OrganizedMatch }) {
   const full = match.needed <= 0;
   return (
-    <div className="bg-white rounded-2xl border border-neutral-200 shadow-card p-4 flex items-center gap-3">
+    <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-card p-4 flex items-center gap-3">
       <span className="w-10 h-10 rounded-xl bg-sunset-orange/10 text-sunset-orange flex items-center justify-center flex-shrink-0">
         {match.sport ? sportIcon[match.sport] : <RunIcon size={18} />}
       </span>
