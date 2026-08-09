@@ -147,8 +147,8 @@ export default function GamesClient() {
               key={sportId}
               onClick={() => setFilter(sportId)}
               className={cn(
-                "flex items-center gap-1.5 px-4 py-2 rounded-full text-body-xs font-medium whitespace-nowrap border transition-all",
-                filter === sportId ? "bg-primary-green text-white border-primary-green" : "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300"
+                "flex items-center gap-1.5 px-4 py-2 rounded-full text-body-xs font-medium whitespace-nowrap border transition-all active:scale-[0.97]",
+                filter === sportId ? "bg-primary-green text-white border-primary-green shadow-sm" : "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
               )}
             >
               {sportId !== "all" && sportIconMap[sportId]}
@@ -162,13 +162,19 @@ export default function GamesClient() {
         {loading ? (
           <p className="text-center py-12 text-body-sm text-neutral-400">Loading live games...</p>
         ) : games.length === 0 ? (
-          <p className="text-center py-12 text-body-sm text-neutral-400">No live games in this radius yet. Be the first to post one.</p>
+          <div className="text-center py-16 px-6">
+            <div className="w-14 h-14 rounded-full bg-primary-green/10 flex items-center justify-center mx-auto mb-3 text-primary-green">
+              <FootballIcon size={26} />
+            </div>
+            <p className="text-body-sm font-medium text-neutral-500">No live games in this radius yet</p>
+            <p className="text-caption text-neutral-400 mt-1">Be the first to post one and rally the players nearby.</p>
+          </div>
         ) : (
           games.map((game) => {
             const action = myActions[game.id];
             return (
               <motion.div key={game.id} variants={itemVariants}>
-                <Card padding="md" className="hover:border-primary-green/30 group">
+                <Card padding="md" className="hover:border-primary-green/30 hover:-translate-y-0.5 group">
                   <div className="flex items-start gap-4">
                     <div className="w-11 h-11 bg-primary-green/10 rounded-xl flex items-center justify-center flex-shrink-0 text-primary-green">
                       {sportIconMap[game.sport]}
