@@ -38,11 +38,20 @@ export default function PostComposer({ player, onPosted }: { player: Player; onP
   };
 
   return (
-    <div id="composer" className="bg-white rounded-2xl border border-neutral-200 shadow-card p-4">
+    <div
+      id="composer"
+      className={cn(
+        "bg-white rounded-2xl border shadow-card p-4 transition-all duration-200",
+        open ? "border-neutral-300/70 shadow-card-hover" : "border-neutral-200/80"
+      )}
+    >
       <div className="flex items-center gap-3">
         <Avatar alt={player.full_name ?? player.username ?? "You"} src={player.profile_photo} size="md" />
         {!open ? (
-          <button onClick={() => setOpen(true)} className="flex-1 text-left px-4 py-2.5 rounded-full bg-neutral-100 text-body-sm text-neutral-500 hover:bg-neutral-200 transition-colors">
+          <button
+            onClick={() => setOpen(true)}
+            className="flex-1 text-left px-4 py-2.5 rounded-full bg-neutral-100 text-body-sm text-neutral-500 hover:bg-neutral-200/80 transition-colors"
+          >
             Share a match moment, {first}
           </button>
         ) : (
@@ -52,13 +61,18 @@ export default function PostComposer({ player, onPosted }: { player: Player; onP
             onChange={(e) => setText(e.target.value)}
             rows={3}
             placeholder={"What is happening on the turf, " + first + "?"}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-body-sm text-neutral-900 outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/20 resize-none"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-neutral-200 text-body-sm text-neutral-900 outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/20 resize-none transition-shadow"
           />
         )}
       </div>
 
       {open && imageOpen && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="overflow-hidden"
+        >
           <div className="mt-3 flex items-center gap-2">
             <input
               value={imageUrl}
@@ -66,7 +80,10 @@ export default function PostComposer({ player, onPosted }: { player: Player; onP
               placeholder="Paste an image URL"
               className="flex-1 px-3.5 py-2 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/20"
             />
-            <button onClick={() => { setImageOpen(false); setImageUrl(""); }} className="w-8 h-8 rounded-lg hover:bg-neutral-100 text-neutral-400 flex items-center justify-center">
+            <button
+              onClick={() => { setImageOpen(false); setImageUrl(""); }}
+              className="w-8 h-8 rounded-lg hover:bg-neutral-100 text-neutral-400 flex items-center justify-center transition-colors"
+            >
               <XIcon size={16} />
             </button>
           </div>
@@ -74,7 +91,12 @@ export default function PostComposer({ player, onPosted }: { player: Player; onP
       )}
 
       {open && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="overflow-hidden"
+        >
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
             <div className="flex items-center gap-1">
               <Chip active={imageOpen} onClick={() => setImageOpen((v) => !v)} icon={<ImageIcon size={16} />} label="Photo" color="text-emerald" />
@@ -94,7 +116,14 @@ export default function PostComposer({ player, onPosted }: { player: Player; onP
 
 function Chip({ active, onClick, icon, label, color }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; color: string }) {
   return (
-    <button onClick={onClick} className={cn("hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-body-xs font-medium transition-colors", active ? "bg-neutral-100" : "hover:bg-neutral-100", color)}>
+    <button
+      onClick={onClick}
+      className={cn(
+        "hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-body-xs font-medium transition-colors",
+        active ? "bg-neutral-100" : "hover:bg-neutral-100",
+        color
+      )}
+    >
       {icon}
       {label}
     </button>

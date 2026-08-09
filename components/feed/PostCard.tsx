@@ -102,7 +102,7 @@ export default function PostCard({ post }: { post: SocialPost }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-2xl border border-neutral-200 shadow-card overflow-hidden transition-shadow hover:shadow-card-hover"
+      className="bg-white rounded-2xl border border-neutral-200/80 shadow-card overflow-hidden transition-shadow hover:shadow-card-hover"
     >
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
@@ -243,7 +243,7 @@ export default function PostCard({ post }: { post: SocialPost }) {
               ))}
               <div className="flex items-center gap-2">
                 <Avatar alt="You" size="xs" />
-                <div className="flex-1 flex items-center gap-2 bg-white rounded-full border border-neutral-200 pl-3 pr-1 py-1">
+                <div className="flex-1 flex items-center gap-2 bg-white rounded-full border border-neutral-200/80 pl-3 pr-1 py-1">
                   <input
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}

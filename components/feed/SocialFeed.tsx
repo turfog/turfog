@@ -36,8 +36,10 @@ export default function SocialFeed() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "px-4 py-1.5 rounded-full text-body-xs font-medium border transition-all",
-              tab === t.id ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-500 border-neutral-200 hover:border-neutral-300"
+              "px-4 py-1.5 rounded-full text-body-xs font-medium border transition-all active:scale-[0.97]",
+              tab === t.id
+                ? "bg-neutral-900 text-white border-neutral-900 shadow-sm"
+                : "bg-white text-neutral-500 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
             )}
           >
             {t.label}
