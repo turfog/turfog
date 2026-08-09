@@ -27,8 +27,9 @@ export default function Card({
     <div
       onClick={onClick}
       className={cn(
-        "bg-white rounded-2xl border border-neutral-200 shadow-card transition-all duration-200",
-        onClick && "cursor-pointer hover:shadow-card-hover",
+        "bg-white rounded-2xl border border-neutral-200/80 shadow-card transition-all duration-200 ease-out",
+        onClick &&
+          "cursor-pointer hover:shadow-card-hover hover:border-neutral-300/70 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]",
         paddingStyles[padding],
         className
       )}

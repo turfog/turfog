@@ -134,7 +134,7 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
     const mt = matchTypeMeta[req.matchType];
 
     return (
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-card p-3.5 h-full flex flex-col">
+      <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-card transition-all duration-200 hover:shadow-card-hover p-3.5 h-full flex flex-col">
         <div className="flex items-start gap-2.5">
           <Avatar alt={req.organizerName} src={req.organizerAvatar} size="sm" />
           <div className="flex-1 min-w-0">

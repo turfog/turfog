@@ -21,13 +21,13 @@ interface ButtonProps {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary-green text-white hover:bg-primary-green/90 shadow-sm",
+    "bg-primary-green text-white hover:bg-primary-green/90 shadow-sm hover:shadow-md",
   secondary:
-    "bg-electric-blue text-white hover:bg-electric-blue-hover shadow-sm",
+    "bg-electric-blue text-white hover:bg-electric-blue-hover shadow-sm hover:shadow-md",
   outline:
-    "border border-neutral-300 text-neutral-700 hover:bg-neutral-50 bg-white",
+    "border border-neutral-300 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-400 bg-white",
   ghost: "text-neutral-600 hover:bg-neutral-100",
-  danger: "bg-coral text-white hover:bg-coral/90 shadow-sm",
+  danger: "bg-coral text-white hover:bg-coral/90 shadow-sm hover:shadow-md",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

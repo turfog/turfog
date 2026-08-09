@@ -52,7 +52,7 @@ export default function AvailablePlayers({ variant }: { variant: "rail" | "scrol
   const card = (p: AvailablePlayer) => {
     const following = !!p.userId && social.isFollowing(p.username);
     return (
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-card p-3.5 h-full flex flex-col">
+      <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-card transition-all duration-200 hover:shadow-card-hover p-3.5 h-full flex flex-col">
         <div className="flex items-start gap-2.5">
           <Link href={`/${p.username}`} className="flex-shrink-0">
             <Avatar alt={p.name} src={p.avatar} size="sm" online />
