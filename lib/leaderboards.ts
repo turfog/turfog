@@ -12,6 +12,7 @@ export interface LeaderboardEntry {
   verified: boolean;
   city: string;
   value: number;
+  presence: string;
 }
 
 export interface Leaderboards {
@@ -30,12 +31,13 @@ interface Base {
   city: string;
   followers: number;
   reliability: number;
+  presence: string;
 }
 
 export async function fetchLeaderboards(): Promise<Leaderboards> {
   const supabase = createClient();
   const [playersRes, postsRes, partsRes, reqsRes, membersRes] = await Promise.all([
-    supabase.from("players").select("auth_id, username, full_name, profile_photo, verification_status, city, followers_count, reliability_score").limit(500),
+    supabase.from("players").select("auth_id, username, full_name, profile_photo, verification_status, city, followers_count, reliability_score, presence").limit(500),
     supabase.from("posts").select("author_id").limit(2000),
     supabase.from("match_request_participants").select("user_id").eq("status", "joined").limit(2000),
     supabase.from("match_requests").select("organizer_id").limit(2000),
@@ -54,6 +56,7 @@ export async function fetchLeaderboards(): Promise<Leaderboards> {
       city: str(p.city),
       followers: num(p.followers_count),
       reliability: num(p.reliability_score, 0),
+      presence: str(p.presence),
     });
   });
 
@@ -84,7 +87,7 @@ export async function fetchLeaderboards(): Promise<Leaderboards> {
   const entry = (id: string, value: number): LeaderboardEntry | null => {
     const b = base.get(id);
     if (!b) return null;
-    return { userId: id, username: b.username, fullName: b.fullName, avatar: b.avatar, verified: b.verified, city: b.city, value };
+    return { userId: id, username: b.username, fullName: b.fullName, avatar: b.avatar, verified: b.verified, city: b.city, presence: b.presence, value };
   };
 
   const active: LeaderboardEntry[] = [];

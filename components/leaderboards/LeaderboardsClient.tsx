@@ -122,7 +122,7 @@ export default function LeaderboardsClient() {
               <Link key={e.userId} href={`/${e.username}`}>
                 <div className="bg-white rounded-2xl border border-neutral-200 shadow-card p-4 flex items-center gap-3 hover:border-primary-green/30 transition-colors">
                   <span className={cn("w-8 h-8 rounded-lg border flex items-center justify-center text-body-xs font-bold flex-shrink-0", rankCls(rank))}>{rank + 1}</span>
-                  <Avatar alt={e.fullName} src={e.avatar} size="md" />
+                  <Avatar alt={e.fullName} src={e.avatar} size="md" presence={e.presence} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <span className="text-body-sm font-semibold text-neutral-900 truncate">{e.fullName}</span>
