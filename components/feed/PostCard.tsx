@@ -6,6 +6,7 @@ import { cn, timeAgo } from "@/lib/utils";
 import Link from "next/link";
 import type { SocialPost, PostComment, SportId } from "@/types";
 import Avatar from "@/components/ui/Avatar";
+import PresenceDot from "@/components/ui/PresenceDot";
 import { useSocial } from "@/context/SocialContext";
 import { fetchComments } from "@/lib/social";
 import {
@@ -28,16 +29,7 @@ import {
   BadmintonIcon,
 } from "@/components/SvgIcons";
 
-function presenceDot(p: string): string {
-  switch (p) {
-    case "available-now": return "bg-emerald";
-    case "in-30-min": return "bg-amber";
-    case "today": return "bg-electric-blue";
-    case "tonight": return "bg-purple-500";
-    case "weekend": return "bg-sunset-orange";
-    default: return "bg-neutral-300";
-  }
-}
+
 
 const sportIcon: Record<SportId, React.ReactNode> = {
   football: <FootballIcon size={13} />,
@@ -107,7 +99,7 @@ export default function PostCard({ post }: { post: SocialPost }) {
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
         <Link href={`/${post.authorUsername}`} className="flex-shrink-0">
-          <Avatar alt={post.authorName} src={post.authorAvatar} size="md" online={post.presence === "available-now"} />
+          <Avatar alt={post.authorName} src={post.authorAvatar} size="md" presence={post.presence} />
         </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -119,7 +111,7 @@ export default function PostCard({ post }: { post: SocialPost }) {
           <div className="flex items-center gap-1.5 text-caption text-neutral-400">
             <span className="truncate">@{post.authorUsername}</span>
             <span className="flex items-center gap-1">
-              <span className={cn("w-1.5 h-1.5 rounded-full", presenceDot(post.presence))} />
+              <PresenceDot presence={post.presence} size="xs" />
               {timeAgo(post.createdAt)}
             </span>
           </div>

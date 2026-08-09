@@ -1,6 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/utils";
+import { getPresence } from "@/lib/presence";
 
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
@@ -9,6 +10,7 @@ interface AvatarProps {
   alt: string;
   size?: AvatarSize;
   online?: boolean;
+  presence?: string;
   className?: string;
 }
 
@@ -33,8 +35,12 @@ export default function Avatar({
   alt,
   size = "md",
   online,
+  presence,
   className = "",
 }: AvatarProps) {
+  const presenceCfg = presence !== undefined ? getPresence(presence) : null;
+  const showOnlineDot = !presenceCfg && online !== undefined;
+
   return (
     <div className={cn("relative inline-flex flex-shrink-0", className)}>
       {src ? (
@@ -56,7 +62,28 @@ export default function Avatar({
           {getInitials(alt)}
         </div>
       )}
-      {online !== undefined && (
+
+      {presenceCfg && (
+        <span
+          className={cn(
+            "absolute bottom-0 right-0 rounded-full border-2 border-white",
+            dotStyles[size]
+          )}
+          title={presenceCfg.label}
+        >
+          {presenceCfg.live && (
+            <span
+              className={cn(
+                "absolute inset-0 rounded-full opacity-60 animate-ping",
+                presenceCfg.dot
+              )}
+            />
+          )}
+          <span className={cn("absolute inset-0 rounded-full", presenceCfg.dot)} />
+        </span>
+      )}
+
+      {showOnlineDot && (
         <span
           className={cn(
             "absolute bottom-0 right-0 rounded-full border-2 border-white",
