@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import Avatar from "@/components/ui/Avatar";
@@ -7,12 +8,30 @@ import { SearchIcon, BellIcon, MessageIcon } from "@/components/SvgIcons";
 import { useSearch } from "@/context/SearchContext";
 import { useMessaging } from "@/context/MessagingContext";
 import { useLocation } from "@/context/LocationContext";
+import { fetchUnreadCount } from "@/lib/notifications";
 import type { Player } from "@/types";
 
 export default function TopBar({ player }: { player: Player }) {
   const { setOpen } = useSearch();
   const { totalUnread } = useMessaging();
   const { radius } = useLocation();
+  const [notifUnread, setNotifUnread] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = () => {
+      fetchUnreadCount().then((n) => { if (mounted) setNotifUnread(n); });
+    };
+    load();
+    const interval = setInterval(load, 30000);
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 h-16 bg-white/85 backdrop-blur-2xl border-b border-neutral-200/60">
@@ -69,10 +88,15 @@ export default function TopBar({ player }: { player: Player }) {
           <Link
             href="/notifications"
             aria-label="Notifications"
+            onClick={() => setNotifUnread(0)}
             className="relative w-10 h-10 rounded-full hover:bg-neutral-100 active:scale-95 transition-all flex items-center justify-center text-neutral-600"
           >
             <BellIcon size={21} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-coral rounded-full ring-2 ring-white" />
+            {notifUnread > 0 && (
+              <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-coral text-white text-caption font-semibold flex items-center justify-center ring-2 ring-white">
+                {notifUnread > 9 ? "9+" : notifUnread}
+              </span>
+            )}
           </Link>
 
           <div className="w-px h-6 bg-neutral-200 mx-1.5 hidden sm:block" />
