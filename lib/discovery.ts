@@ -22,6 +22,9 @@ export interface MatchRequestRow {
   team_name: string | null;
   is_active: boolean;
   created_at: string;
+  cost_total: number;
+  cost_split_mode: "none" | "split" | "organizer_pays";
+  currency: string;
 }
 
 export interface HeartbeatRow {
@@ -137,6 +140,9 @@ export async function createMatchRequest(input: {
   kickoffAt: string;
   lat: number | null;
   lng: number | null;
+  costTotal?: number;
+  costSplitMode?: "none" | "split" | "organizer_pays";
+  currency?: string;
 }): Promise<{ data: MatchRequestRow | null; error: string | null }> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -167,6 +173,9 @@ export async function createMatchRequest(input: {
       match_type: input.matchType,
       team_name: input.teamName ?? null,
       is_active: true,
+      cost_total: input.costTotal ?? 0,
+      cost_split_mode: input.costSplitMode ?? "none",
+      currency: input.currency ?? "INR",
     })
     .select()
     .single();

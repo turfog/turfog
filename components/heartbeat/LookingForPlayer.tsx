@@ -32,6 +32,14 @@ const sportIconMap: Record<SportId, React.ReactNode> = {
 
 const MATCH_TYPES: MatchType[] = ["casual", "practice", "competitive", "tournament"];
 
+type CostMode = "none" | "split" | "organizer_pays";
+
+const COST_MODES: Array<{ id: CostMode; label: string; sub: string }> = [
+  { id: "none", label: "No cost", sub: "Casual, free game" },
+  { id: "split", label: "Split evenly", sub: "Everyone shares the turf cost" },
+  { id: "organizer_pays", label: "I'll pay", sub: "Free for everyone else" },
+];
+
 function toLocalInput(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
@@ -55,6 +63,15 @@ export default function LookingForPlayer() {
   const [posted, setPosted] = useState(false);
   const [error, setError] = useState("");
 
+  // Cost sharing state
+  const [costMode, setCostMode] = useState<CostMode>("none");
+  const [costTotal, setCostTotal] = useState("");
+
+  const costPerPerson =
+    costMode === "split" && Number(costTotal) > 0 && playersNeeded > 0
+      ? Math.ceil(Number(costTotal) / playersNeeded)
+      : 0;
+
   const reset = () => {
     setIsExpanded(false);
     setSelectedSport(null);
@@ -65,6 +82,8 @@ export default function LookingForPlayer() {
     setNote("");
     setError("");
     setPosted(false);
+    setCostMode("none");
+    setCostTotal("");
     setKickoff(toLocalInput(new Date(Date.now() + 2 * 3600 * 1000)));
   };
 
@@ -76,6 +95,10 @@ export default function LookingForPlayer() {
     }
     if (!venue.trim()) {
       setError("Add a venue or turf name");
+      return;
+    }
+    if (costMode === "split" && (!costTotal || Number(costTotal) <= 0)) {
+      setError("Enter the total turf cost to split");
       return;
     }
     setPosting(true);
@@ -91,6 +114,9 @@ export default function LookingForPlayer() {
       kickoffAt: new Date(kickoff).toISOString(),
       lat,
       lng,
+      costTotal: costMode === "none" ? 0 : Number(costTotal) || 0,
+      costSplitMode: costMode,
+      currency: "INR",
     });
     setPosting(false);
     if (postError || !created) {
@@ -108,10 +134,20 @@ export default function LookingForPlayer() {
             <CheckCircleIcon size={28} className="text-emerald" />
           </div>
           <h3 className="text-body-md font-semibold text-neutral-900 mb-1">Request posted</h3>
-          <p className="text-body-xs text-neutral-500 mb-4">
+          <p className="text-body-xs text-neutral-500 mb-2">
             Your request for {playersNeeded} {selectedSport} player
             {playersNeeded > 1 ? "s" : ""} is now live for nearby players.
           </p>
+          {costMode === "split" && costPerPerson > 0 && (
+            <p className="text-body-xs font-medium text-neutral-700 mb-4">
+              Cost: ₹{costPerPerson}/person (₹{Number(costTotal)} ÷ {playersNeeded} players)
+            </p>
+          )}
+          {costMode === "organizer_pays" && (
+            <p className="text-body-xs font-medium text-emerald mb-4">
+              Free for all players — you're covering the cost. 🎉
+            </p>
+          )}
           <Button variant="outline" size="sm" onClick={reset}>
             Post another
           </Button>
@@ -247,12 +283,13 @@ export default function LookingForPlayer() {
                     whileTap={{ scale: 0.9 }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setPlayersNeeded(Math.min(11, playersNeeded + 1));
+                      setPlayersNeeded(Math.min(22, playersNeeded + 1));
                     }}
                     className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold"
                   >
                     +
                   </motion.button>
+                  <span className="text-caption text-neutral-400 ml-1">total players in match</span>
                 </div>
               </div>
 
@@ -261,7 +298,7 @@ export default function LookingForPlayer() {
                 <input
                   value={venue}
                   onChange={(e) => setVenue(e.target.value)}
-                  placeholder="e.g. Champions Turf"
+                  placeholder="e.g. Champions Turf, Andheri"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-sunset-orange focus:ring-2 focus:ring-sunset-orange/20 transition-all"
                 />
               </div>
@@ -277,6 +314,85 @@ export default function LookingForPlayer() {
                     className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 outline-none focus:border-sunset-orange focus:ring-2 focus:ring-sunset-orange/20 transition-all"
                   />
                 </div>
+              </div>
+
+              {/* Cost Sharing */}
+              <div onClick={(e) => e.stopPropagation()}>
+                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Cost sharing</label>
+                <div className="space-y-2">
+                  {COST_MODES.map((mode) => (
+                    <button
+                      key={mode.id}
+                      onClick={() => setCostMode(mode.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border text-left transition-all",
+                        costMode === mode.id
+                          ? "border-sunset-orange bg-sunset-orange/5"
+                          : "border-neutral-200 hover:border-neutral-300"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
+                          costMode === mode.id ? "border-sunset-orange" : "border-neutral-300"
+                        )}
+                      >
+                        {costMode === mode.id && (
+                          <span className="w-2 h-2 rounded-full bg-sunset-orange" />
+                        )}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-body-xs font-semibold text-neutral-900">{mode.label}</span>
+                        <span className="block text-caption text-neutral-400">{mode.sub}</span>
+                      </span>
+                      {mode.id === "organizer_pays" && costMode === "organizer_pays" && (
+                        <span className="text-caption font-semibold text-emerald">🎉</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Split cost input */}
+                <AnimatePresence>
+                  {costMode === "split" && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 p-3.5 rounded-xl bg-neutral-50 border border-neutral-100 space-y-3">
+                        <div>
+                          <label className="text-caption font-medium text-neutral-600 mb-1.5 block">
+                            Total turf / venue cost
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-body-xs font-semibold text-neutral-500">₹</span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={costTotal}
+                              onChange={(e) => setCostTotal(e.target.value)}
+                              placeholder="e.g. 1000"
+                              className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-sunset-orange focus:ring-2 focus:ring-sunset-orange/20 transition-all bg-white"
+                            />
+                          </div>
+                        </div>
+                        {Number(costTotal) > 0 && playersNeeded > 0 && (
+                          <div className="flex items-center justify-between px-1">
+                            <span className="text-caption text-neutral-500">
+                              ₹{Number(costTotal)} ÷ {playersNeeded} players
+                            </span>
+                            <span className="text-body-xs font-bold text-sunset-orange">
+                              = ₹{costPerPerson}/person
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div className="flex items-center gap-1.5 text-body-xs text-neutral-400">

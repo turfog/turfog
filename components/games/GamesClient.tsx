@@ -18,6 +18,7 @@ import {
 import type { MatchRequestRow } from "@/lib/discovery";
 import type { SportId } from "@/types";
 import {
+  CurrencyIcon,
   MapPinIcon,
   ClockIcon,
   UsersIcon,
@@ -92,6 +93,7 @@ export default function GamesClient() {
     const mapped = rows.map((r) => {
       const sport = safeSport(r.sport);
       const distanceKm = lat != null && lng != null && r.latitude != null && r.longitude != null ? haversineKm(lat, lng, r.latitude, r.longitude) : null;
+      const costPerPerson = r.cost_split_mode === "split" && r.capacity > 0 ? Math.ceil(r.cost_total / r.capacity) : 0;
       return {
         id: r.id,
         sport,
@@ -104,6 +106,10 @@ export default function GamesClient() {
         skill: r.skill,
         host: r.organizer_name,
         distanceKm,
+        costTotal: r.cost_total,
+        costSplitMode: r.cost_split_mode,
+        costPerPerson,
+        currency: r.currency,
       };
     });
     const inRadius = lat != null && lng != null ? mapped.filter((g) => g.distanceKm == null || g.distanceKm <= radius) : mapped;
@@ -187,10 +193,22 @@ export default function GamesClient() {
                         <span className="flex items-center gap-1"><UsersIcon size={12} />{game.playersJoined} joined</span>
                         {game.distanceKm != null && <span className="flex items-center gap-1"><MapPinIcon size={12} />{game.distanceKm.toFixed(1)} km</span>}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant={game.playersNeeded > 0 ? "warning" : "success"} size="sm" animated={false}>
                           {game.playersNeeded > 0 ? `Need ${game.playersNeeded} more` : "Full squad"}
                         </Badge>
+                        {game.costSplitMode === "split" && game.costPerPerson > 0 && (
+                          <span className="inline-flex items-center gap-1 text-caption font-medium text-neutral-600">
+                            <CurrencyIcon size={12} />
+                            {game.currency === "INR" ? "₹" : game.currency}
+                            {game.costPerPerson}/person
+                          </span>
+                        )}
+                        {game.costSplitMode === "organizer_pays" && (
+                          <span className="inline-flex items-center gap-1 text-caption font-medium text-emerald">
+                            Free (host paying)
+                          </span>
+                        )}
                         <span className="text-caption text-neutral-400 capitalize">{game.skill}</span>
                         <span className="text-caption text-neutral-400">by {game.host}</span>
                       </div>
