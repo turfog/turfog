@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, timeAgo } from "@/lib/utils";
 import Link from "next/link";
@@ -8,7 +8,8 @@ import type { SocialPost, PostComment, SportId } from "@/types";
 import Avatar from "@/components/ui/Avatar";
 import PresenceDot from "@/components/ui/PresenceDot";
 import { useSocial } from "@/context/SocialContext";
-import { fetchComments } from "@/lib/social";
+import { fetchComments, commentPost } from "@/lib/social";
+import { createClient } from "@/lib/supabase";
 import {
   CheckCircleIcon,
   MapPinIcon,
@@ -29,7 +30,9 @@ import {
   BadmintonIcon,
 } from "@/components/SvgIcons";
 
-
+interface ThreadedComment extends PostComment {
+  parentId?: string | null;
+}
 
 const sportIcon: Record<SportId, React.ReactNode> = {
   football: <FootballIcon size={13} />,
@@ -51,22 +54,27 @@ export default function PostCard({ post }: { post: SocialPost }) {
   const social = useSocial();
   const [saved, setSaved] = useState(post.savedByMe);
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<PostComment[]>(post.comments);
+  const [comments, setComments] = useState<ThreadedComment[]>(post.comments as ThreadedComment[]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [draft, setDraft] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [burst, setBurst] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const long = post.text.length > 180;
   const following = !!post.authorId && social.isFollowing(post.authorUsername);
   const isMe = post.authorUsername === social.myUsername;
+
+  const topLevel = comments.filter(c => !c.parentId);
+  const getReplies = (id: string) => comments.filter(c => c.parentId === id);
 
   const openComments = async () => {
     const next = !showComments;
     setShowComments(next);
     if (next && !commentsLoaded) {
       const loaded = await fetchComments(post.id);
-      setComments(loaded);
+      setComments(loaded as ThreadedComment[]);
       setCommentsLoaded(true);
     }
   };
@@ -79,13 +87,50 @@ export default function PostCard({ post }: { post: SocialPost }) {
     social.like(post.id);
   };
 
+  const startReply = (c: ThreadedComment) => {
+    setReplyingTo(c.id);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
   const addComment = async () => {
     const t = draft.trim();
     if (!t) return;
     setDraft("");
-    const c = await social.comment(post.id, t);
-    if (c) setComments((prev) => [...prev, c]);
+    const c = await commentPost(post.id, t, replyingTo);
+    if (c) {
+      setComments((prev) => [...prev, c as ThreadedComment]);
+      setReplyingTo(null);
+    }
   };
+
+  // Real-time comment listener
+  React.useEffect(() => {
+    if (!showComments) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`post-comments-${post.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "post_comments", filter: `post_id=eq.${post.id}` },
+        (payload) => {
+          const newComment = payload.new as any;
+          // Prevent duplicate insertion if optimistic update already added it
+          setComments(prev => {
+            if (prev.some(c => c.id === newComment.id)) return prev;
+            return [...prev, {
+              id: newComment.id,
+              authorName: newComment.author_name,
+              authorAvatar: newComment.author_avatar,
+              text: newComment.text,
+              createdAt: newComment.created_at,
+              parentId: newComment.parent_id
+            }];
+          });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [showComments, post.id]);
 
   return (
     <motion.article
@@ -223,26 +268,54 @@ export default function PostCard({ post }: { post: SocialPost }) {
       <AnimatePresence initial={false}>
         {showComments && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-            <div className="px-4 py-3 space-y-3 border-t border-neutral-100 bg-neutral-50/50">
-              {comments.map((c) => (
-                <div key={c.id} className="flex items-start gap-2">
-                  <Avatar alt={c.authorName} src={c.authorAvatar} size="xs" />
-                  <div className="bg-white rounded-xl px-3 py-2 border border-neutral-100 flex-1">
-                    <p className="text-caption font-semibold text-neutral-900">{c.authorName}</p>
-                    <p className="text-body-xs text-neutral-600">{c.text}</p>
+            <div className="px-4 py-3 space-y-4 border-t border-neutral-100 bg-neutral-50/50">
+              {topLevel.map((c) => (
+                <div key={c.id} className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <Avatar alt={c.authorName} src={c.authorAvatar} size="xs" />
+                    <div className="flex-1 min-w-0">
+                      <div className="bg-white rounded-xl px-3 py-2 border border-neutral-100">
+                        <p className="text-caption font-semibold text-neutral-900">{c.authorName}</p>
+                        <p className="text-body-xs text-neutral-600">{c.text}</p>
+                      </div>
+                      <button
+                        onClick={() => startReply(c)}
+                        className="text-caption text-neutral-400 font-semibold hover:text-electric-blue mt-1 ml-1"
+                      >
+                        Reply
+                      </button>
+                    </div>
                   </div>
+                  {getReplies(c.id).map((r) => (
+                    <div key={r.id} className="flex items-start gap-2 ml-6">
+                      <Avatar alt={r.authorName} src={r.authorAvatar} size="xs" />
+                      <div className="bg-white rounded-xl px-3 py-2 border border-neutral-100 flex-1">
+                        <p className="text-caption font-semibold text-neutral-900">{r.authorName}</p>
+                        <p className="text-body-xs text-neutral-600">{r.text}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-3">
                 <Avatar alt="You" size="xs" />
                 <div className="flex-1 flex items-center gap-2 bg-white rounded-full border border-neutral-200/80 pl-3 pr-1 py-1">
                   <input
+                    ref={inputRef}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") addComment(); }}
-                    placeholder="Write a comment"
+                    placeholder={replyingTo ? "Write a reply..." : "Write a comment"}
                     className="flex-1 bg-transparent text-body-xs outline-none placeholder:text-neutral-400"
                   />
+                  {replyingTo && (
+                    <button
+                      onClick={() => setReplyingTo(null)}
+                      className="text-caption text-neutral-400 hover:text-neutral-600 px-1"
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button onClick={addComment} disabled={!draft.trim()} className="w-7 h-7 rounded-full bg-primary-green text-white flex items-center justify-center disabled:opacity-40">
                     <SendIcon size={14} />
                   </button>

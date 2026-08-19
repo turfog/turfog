@@ -92,19 +92,20 @@ export async function fetchFeed(): Promise<SocialPost[]> {
   return list.map((r) => mapPost(r, likedSet.has(r.id), metaMap.get(r.author_username)));
 }
 
-export async function fetchComments(postId: string): Promise<PostComment[]> {
+export async function fetchComments(postId: string): Promise<Array<PostComment & { parentId: string | null }>> {
   const supabase = createClient();
   const { data } = await supabase
     .from("post_comments")
     .select("*")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
-  return ((data ?? []) as Array<{ id: string; author_name: string; author_avatar: string; text: string; created_at: string }>).map((c) => ({
+  return ((data ?? []) as Array<{ id: string; author_name: string; author_avatar: string; text: string; created_at: string; parent_id: string | null }>).map((c) => ({
     id: c.id,
     authorName: c.author_name ?? "Player",
     authorAvatar: c.author_avatar ?? "",
     text: c.text ?? "",
     createdAt: c.created_at,
+    parentId: c.parent_id ?? null,
   }));
 }
 
@@ -115,12 +116,12 @@ export async function likePost(postId: string): Promise<{ liked: boolean; likes_
   return data as { liked: boolean; likes_count: number };
 }
 
-export async function commentPost(postId: string, text: string): Promise<PostComment & { comments_count: number } | null> {
+export async function commentPost(postId: string, text: string, parentId?: string | null): Promise<PostComment & { comments_count: number; parentId: string | null } | null> {
   const supabase = createClient();
-  const { data, error } = await supabase.rpc("add_post_comment", { p_post_id: postId, p_text: text });
+  const { data, error } = await supabase.rpc("add_post_comment", { p_post_id: postId, p_text: text, p_parent_id: parentId ?? null });
   if (error) return null;
-  const d = data as { id: string; authorName: string; authorAvatar: string; text: string; createdAt: string; comments_count: number };
-  return { id: d.id, authorName: d.authorName, authorAvatar: d.authorAvatar, text: d.text, createdAt: d.createdAt, comments_count: d.comments_count };
+  const d = data as { id: string; authorName: string; authorAvatar: string; text: string; createdAt: string; comments_count: number; parentId: string | null };
+  return { id: d.id, authorName: d.authorName, authorAvatar: d.authorAvatar, text: d.text, createdAt: d.createdAt, comments_count: d.comments_count, parentId: d.parentId ?? null };
 }
 
 export async function sharePost(postId: string): Promise<number | null> {
