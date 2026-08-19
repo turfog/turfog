@@ -17,6 +17,7 @@ function iconFor(t: string): { Icon: (p: { size?: number; className?: string }) 
     case "team-invite": return { Icon: TrophyIcon, cls: "bg-amber/10 text-amber" };
     case "endorsement": return { Icon: TrophyIcon, cls: "bg-purple-500/10 text-purple-500" };
     case "match-join": return { Icon: RunIcon, cls: "bg-sunset-orange/10 text-sunset-orange" };
+    case "play-request": return { Icon: RunIcon, cls: "bg-primary-green/10 text-primary-green" };
     default: return { Icon: RunIcon, cls: "bg-sunset-orange/10 text-sunset-orange" };
   }
 }
