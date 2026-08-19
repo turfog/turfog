@@ -348,3 +348,17 @@ export function subscribeSocial(onChange: SocialListener): () => void {
     }
   };
 }
+
+export async function searchPlaces(q: string): Promise<Array<{ name: string; lat: number; lng: number }>> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}`,
+      { headers: { Accept: "application/json" } }
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as Array<{ display_name: string; lat: string; lon: string }>;
+    return data.map((d) => ({ name: d.display_name, lat: parseFloat(d.lat), lng: parseFloat(d.lon) }));
+  } catch {
+    return [];
+  }
+}

@@ -110,6 +110,8 @@ export default function GamesClient() {
         costSplitMode: r.cost_split_mode,
         costPerPerson,
         currency: r.currency,
+        lat: r.latitude,
+        lng: r.longitude,
       };
     });
     const inRadius = lat != null && lng != null ? mapped.filter((g) => g.distanceKm == null || g.distanceKm <= radius) : mapped;
@@ -192,6 +194,11 @@ export default function GamesClient() {
                         <span className="flex items-center gap-1"><ClockIcon size={12} />{game.time}</span>
                         <span className="flex items-center gap-1"><UsersIcon size={12} />{game.playersJoined} joined</span>
                         {game.distanceKm != null && <span className="flex items-center gap-1"><MapPinIcon size={12} />{game.distanceKm.toFixed(1)} km</span>}
+                        {game.lat != null && game.lng != null && (
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${game.lat},${game.lng}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-electric-blue hover:underline">
+                            <MapPinIcon size={12} />Map
+                          </a>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant={game.playersNeeded > 0 ? "warning" : "success"} size="sm" animated={false}>
