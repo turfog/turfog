@@ -112,14 +112,14 @@ export async function fetchComments(postId: string): Promise<Array<PostComment &
 export async function likePost(postId: string): Promise<{ liked: boolean; likes_count: number } | null> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("toggle_post_like", { p_post_id: postId });
-  if (error) return null;
+  if (error) { console.error("Supabase RPC error:", error); return null; }
   return data as { liked: boolean; likes_count: number };
 }
 
 export async function commentPost(postId: string, text: string, parentId?: string | null): Promise<PostComment & { comments_count: number; parentId: string | null } | null> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("add_post_comment", { p_post_id: postId, p_text: text, p_parent_id: parentId ?? null });
-  if (error) return null;
+  if (error) { console.error("Supabase RPC error:", error); return null; }
   const d = data as { id: string; authorName: string; authorAvatar: string; text: string; createdAt: string; comments_count: number; parentId: string | null };
   return { id: d.id, authorName: d.authorName, authorAvatar: d.authorAvatar, text: d.text, createdAt: d.createdAt, comments_count: d.comments_count, parentId: d.parentId ?? null };
 }
@@ -127,14 +127,14 @@ export async function commentPost(postId: string, text: string, parentId?: strin
 export async function sharePost(postId: string): Promise<number | null> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("share_post", { p_post_id: postId });
-  if (error) return null;
+  if (error) { console.error("Supabase RPC error:", error); return null; }
   return (data as { shares_count: number }).shares_count;
 }
 
 export async function toggleFollow(targetId: string): Promise<{ following: boolean } | null> {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("toggle_follow", { p_target_id: targetId });
-  if (error) return null;
+  if (error) { console.error("Supabase RPC error:", error); return null; }
   return data as { following: boolean };
 }
 
