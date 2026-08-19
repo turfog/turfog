@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSocial } from "@/context/SocialContext";
+import { createClient } from "@/lib/supabase";
 import PostCard from "@/components/feed/PostCard";
 import EmptyState from "@/components/ui/EmptyState";
 import Skeleton from "@/components/ui/Skeleton";
@@ -37,8 +38,28 @@ function PostSkeleton() {
 }
 
 export default function SocialFeed() {
-  const { posts, loading, isFollowing } = useSocial();
+  const { posts, loading, isFollowing, refresh } = useSocial();
   const [tab, setTab] = useState<Tab>("for-you");
+
+  // Real-time listener for feed updates
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("feed-live-updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "posts" },
+        () => {
+          // Debounce slightly to avoid rapid-fire re-fetches if multiple stats log at once
+          setTimeout(() => refresh(), 300);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refresh]);
 
   const filtered =
     tab === "following"
