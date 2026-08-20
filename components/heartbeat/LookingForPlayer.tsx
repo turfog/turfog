@@ -128,6 +128,7 @@ export default function LookingForPlayer() {
       sport: selectedSport,
       playersNeeded,
       totalPlayers,
+      playersInHand,
       skill: selectedSkill,
       matchType,
       venue: venue.trim(),
