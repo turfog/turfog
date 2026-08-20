@@ -14,6 +14,8 @@ export interface Match {
   venue: string;
   playedAt: string;
   status: string;
+  createdBy: string;
+  verificationStatus: string;
 }
 
 export interface PlayerStats {
@@ -78,6 +80,8 @@ export async function fetchMatches(limit = 20): Promise<Match[]> {
     venue: str(m.venue),
     playedAt: str(m.played_at),
     status: str(m.status, "completed"),
+    createdBy: str(m.created_by),
+    verificationStatus: str(m.verification_status, "pending"),
   }));
 }
 
@@ -117,4 +121,37 @@ export async function fetchPlayerStats(userId: string): Promise<PlayerStats> {
     if (r.mvp === true) mvps += 1;
   });
   return { matchesPlayed: matchIds.size, goals, assists, runs, wickets, saves, points, mvps };
+}
+
+export async function verifyMatch(matchId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data: match } = await supabase
+    .from("matches")
+    .select("created_by, team_a_name, team_b_name")
+    .eq("id", matchId)
+    .maybeSingle();
+  const { error } = await supabase
+    .from("matches")
+    .update({ verification_status: "verified", verified_by: user.id, verified_at: new Date().toISOString() })
+    .eq("id", matchId);
+  if (error) return false;
+  const rec = (match as { created_by: string | null } | null)?.created_by;
+  if (rec && rec !== user.id) {
+    const { data: me } = await supabase.from("players").select("full_name, username, profile_photo").eq("auth_id", user.id).maybeSingle();
+    const p = (me ?? {}) as Record<string, unknown>;
+    await supabase.from("notifications").insert({
+      recipient_id: rec,
+      actor_id: user.id,
+      actor_name: (p.full_name as string) ?? "Someone",
+      actor_username: (p.username as string) ?? "",
+      actor_avatar: (p.profile_photo as string) ?? "",
+      type: "match-verified",
+      text: "confirmed your match result",
+      href: "/matches",
+      target_id: matchId,
+    });
+  }
+  return true;
 }

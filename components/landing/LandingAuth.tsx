@@ -109,7 +109,8 @@ const CSS = `
 .lz-global a{color:var(--slate-500);text-decoration:none;margin:0 8px;transition:color .2s}
 .lz-global a:hover{color:var(--green-600)}
 @media(max-width:900px){
-  .lz-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+  .lz{height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .lz-shell{grid-template-columns:1fr;grid-template-rows:auto auto;height:auto;min-height:100%;overflow:visible}
   .lz-left{border-right:none;border-bottom:1px solid var(--slate-200);padding:20px 20px 16px}
   .lz-brand{margin-bottom:16px}.lz-hero{margin-bottom:16px}
   .lz-hero h1{font-size:26px;margin-bottom:6px}.lz-hero p{display:none}

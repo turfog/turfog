@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase";
-import { recordMatch, fetchMatches, logPlayerStat } from "@/lib/matches";
+import { recordMatch, fetchMatches, logPlayerStat, verifyMatch } from "@/lib/matches";
 import type { Match, StatInput } from "@/lib/matches";
 import { fetchMatchStats } from "@/lib/matchHistory";
 import type { MatchPlayerStat } from "@/lib/matchHistory";
@@ -167,7 +167,17 @@ function MatchRow({ match, myId, stats, onStatsSaved }: { match: Match; myId: st
   const [statInput, setStatInput] = useState<StatInput>({});
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const fields = STAT_FIELDS[match.sport] ?? [];
+
+  const canVerify = !!myId && myId !== match.createdBy && match.verificationStatus === "pending" && stats.some((s) => s.userId === myId);
+  const onVerify = async () => {
+    if (verifying || !myId) return;
+    setVerifying(true);
+    await verifyMatch(match.id);
+    setVerifying(false);
+    onStatsSaved();
+  };
 
   const onSave = async () => {
     if (busy || !myId) return;
@@ -190,6 +200,10 @@ function MatchRow({ match, myId, stats, onStatsSaved }: { match: Match; myId: st
             <span className="capitalize">{match.sport.replace("-", " ")}</span>
             {match.venue && <span className="flex items-center gap-0.5"><MapPinIcon size={11} />{match.venue}</span>}
             <span className="flex items-center gap-0.5"><ClockIcon size={11} />{formatDate(match.playedAt)}</span>
+            <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold", match.verificationStatus === "verified" ? "bg-emerald/10 text-emerald" : "bg-amber/10 text-amber")}>
+              {match.verificationStatus === "verified" ? <CheckCircleIcon size={11} /> : <ClockIcon size={11} />}
+              {match.verificationStatus === "verified" ? "Verified" : "Pending"}
+            </span>
           </div>
         </div>
         {myId && (
@@ -198,6 +212,9 @@ function MatchRow({ match, myId, stats, onStatsSaved }: { match: Match; myId: st
           ) : (
             <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>{open ? "Close" : "Log my stats"}</Button>
           )
+        )}
+        {canVerify && (
+          <Button size="sm" variant="primary" loading={verifying} onClick={onVerify}>Confirm result</Button>
         )}
       </div>
 
