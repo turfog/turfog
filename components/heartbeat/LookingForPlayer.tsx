@@ -53,6 +53,7 @@ export default function LookingForPlayer() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSport, setSelectedSport] = useState<SportId | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [playersInHand, setPlayersInHand] = useState(0);
   const [playersNeeded, setPlayersNeeded] = useState(2);
   const [matchType, setMatchType] = useState<MatchType>("casual");
   const [venue, setVenue] = useState("");
@@ -73,8 +74,9 @@ export default function LookingForPlayer() {
   const [venueAddress, setVenueAddress] = useState("");
   const searchTimer = useRef<number | null>(null);
 
+  const totalPlayers = playersInHand + playersNeeded;
   const costPerPerson =
-    Number(costTotal) > 0 && playersNeeded > 0 ? Math.ceil(Number(costTotal) / playersNeeded) : 0;
+    Number(costTotal) > 0 && totalPlayers > 0 ? Math.ceil(Number(costTotal) / totalPlayers) : 0;
 
   const onCostChange = (v: string) => {
     setCostTotal(v);
@@ -110,7 +112,7 @@ export default function LookingForPlayer() {
 
   const reset = () => {
     setIsExpanded(false); setSelectedSport(null); setSelectedSkill(null);
-    setPlayersNeeded(2); setMatchType("casual"); setVenue(""); setNote("");
+    setPlayersInHand(0); setPlayersNeeded(2); setMatchType("casual"); setVenue(""); setNote("");
     setError(""); setPosted(false); setCostMode("none"); setCostTotal("");
     setVenueQuery(""); setVenueSuggestions([]); setVenueLat(null); setVenueLng(null); setVenueAddress("");
     setKickoff(toLocalInput(new Date(Date.now() + 2 * 3600 * 1000)));
@@ -125,6 +127,7 @@ export default function LookingForPlayer() {
     const { data: created, error: postError } = await createMatchRequest({
       sport: selectedSport,
       playersNeeded,
+      totalPlayers,
       skill: selectedSkill,
       matchType,
       venue: venue.trim(),
@@ -152,10 +155,10 @@ export default function LookingForPlayer() {
           </div>
           <h3 className="text-body-md font-semibold text-neutral-900 mb-1">Request posted</h3>
           <p className="text-body-xs text-neutral-500 mb-2">
-            Your request for {playersNeeded} {selectedSport} player{playersNeeded > 1 ? "s" : ""} is live nearby.
+            Looking for {playersNeeded} more {selectedSport} player{playersNeeded > 1 ? "s" : ""} ({totalPlayers} total).
           </p>
           {costMode === "split" && costPerPerson > 0 && (
-            <p className="text-body-xs font-medium text-neutral-700 mb-2">₹{costPerPerson}/person (₹{Number(costTotal)} ÷ {playersNeeded})</p>
+            <p className="text-body-xs font-medium text-neutral-700 mb-2">₹{costPerPerson}/person (₹{Number(costTotal)} ÷ {totalPlayers} players)</p>
           )}
           {costMode === "organizer_pays" && (
             <p className="text-body-xs font-medium text-emerald mb-2">Free for all players — you're covering it. 🎉</p>
@@ -222,14 +225,25 @@ export default function LookingForPlayer() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Total players in match</label>
-                <div className="flex items-center gap-3">
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersNeeded(Math.max(1, playersNeeded - 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">-</motion.button>
-                  <span className="text-display-xs font-bold text-neutral-900 w-8 text-center">{playersNeeded}</span>
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersNeeded(Math.min(22, playersNeeded + 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">+</motion.button>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-body-xs font-medium text-neutral-700 mb-2 block">I already have</label>
+                  <div className="flex items-center gap-2">
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersInHand(Math.max(0, playersInHand - 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">-</motion.button>
+                    <span className="text-display-xs font-bold text-neutral-900 w-8 text-center">{playersInHand}</span>
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersInHand(Math.min(21, playersInHand + 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">+</motion.button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Looking for</label>
+                  <div className="flex items-center gap-2">
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersNeeded(Math.max(1, playersNeeded - 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">-</motion.button>
+                    <span className="text-display-xs font-bold text-sunset-orange w-8 text-center">{playersNeeded}</span>
+                    <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersNeeded(Math.min(22, playersNeeded + 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">+</motion.button>
+                  </div>
                 </div>
               </div>
+              <p className="text-caption text-neutral-400 -mt-2">Total squad: <span className="font-semibold text-neutral-700">{totalPlayers}</span> players</p>
 
               <div onClick={(e) => e.stopPropagation()}>
                 <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Venue / turf name</label>
@@ -266,15 +280,15 @@ export default function LookingForPlayer() {
               </div>
 
               <div onClick={(e) => e.stopPropagation()}>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Turf / venue cost (₹)</label>
+                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Total turf / venue cost (₹)</label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-body-xs font-semibold text-neutral-500">₹</span>
                   <input type="number" min={0} value={costTotal} onChange={(e) => onCostChange(e.target.value)} placeholder="e.g. 1000 (0 for free)"
                     className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-sunset-orange focus:ring-2 focus:ring-sunset-orange/20 transition-all" />
                 </div>
-                {Number(costTotal) > 0 && playersNeeded > 0 && (
+                {Number(costTotal) > 0 && totalPlayers > 0 && (
                   <div className="flex items-center justify-between mt-2 px-1">
-                    <span className="text-caption text-neutral-500">₹{Number(costTotal)} ÷ {playersNeeded} players</span>
+                    <span className="text-caption text-neutral-500">₹{Number(costTotal)} ÷ {totalPlayers} players</span>
                     <span className="text-body-xs font-bold text-sunset-orange">= ₹{costPerPerson}/person</span>
                   </div>
                 )}

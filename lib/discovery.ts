@@ -140,6 +140,7 @@ export async function createMatchRequest(input: {
   kickoffAt: string;
   lat: number | null;
   lng: number | null;
+  totalPlayers?: number;
   costTotal?: number;
   costSplitMode?: "none" | "split" | "organizer_pays";
   currency?: string;
@@ -162,7 +163,7 @@ export async function createMatchRequest(input: {
       verified: player?.verification_status === "verified",
       sport: input.sport,
       needed: input.playersNeeded,
-      capacity: input.playersNeeded,
+      capacity: input.totalPlayers ?? input.playersNeeded,
       waitlist_count: 0,
       kickoff_at: input.kickoffAt,
       venue: input.venue,
