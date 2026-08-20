@@ -226,21 +226,10 @@ export async function joinRequest(requestId: string, isFull: boolean): Promise<v
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   const status = isFull ? "waitlist" : "joined";
-  const { error } = await supabase
+  await supabase
     .from("match_request_participants")
     .insert({ request_id: requestId, user_id: user.id, status });
-  if (error) return;
-  const { data: req } = await supabase
-    .from("match_requests")
-    .select("needed, waitlist_count")
-    .eq("id", requestId)
-    .single();
-  if (!req) return;
-  if (isFull) {
-    await supabase.from("match_requests").update({ waitlist_count: (req.waitlist_count ?? 0) + 1 }).eq("id", requestId);
-  } else {
-    await supabase.from("match_requests").update({ needed: Math.max(0, req.needed - 1) }).eq("id", requestId);
-  }
+  // Slot counts (needed / waitlist_count) are maintained by the adjust_match_slots DB trigger.
 }
 
 export async function leaveRequest(requestId: string): Promise<void> {
@@ -255,33 +244,19 @@ export async function leaveRequest(requestId: string): Promise<void> {
     .maybeSingle();
   if (!mine) return;
   await supabase.from("match_request_participants").delete().eq("id", mine.id);
-  const { data: req } = await supabase
-    .from("match_requests")
-    .select("needed, waitlist_count")
-    .eq("id", requestId)
-    .single();
-  if (!req) return;
+  // Counts are maintained by the trigger. If a joined slot freed up, promote the oldest waitlist.
   if (mine.status === "joined") {
-    let needed = req.needed + 1;
-    let waitlist = req.waitlist_count ?? 0;
-    if (waitlist > 0) {
-      const { data: wl } = await supabase
-        .from("match_request_participants")
-        .select("id")
-        .eq("request_id", requestId)
-        .eq("status", "waitlist")
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (wl) {
-        await supabase.from("match_request_participants").update({ status: "joined" }).eq("id", wl.id);
-        needed = Math.max(0, needed - 1);
-        waitlist = Math.max(0, waitlist - 1);
-      }
+    const { data: wl } = await supabase
+      .from("match_request_participants")
+      .select("id")
+      .eq("request_id", requestId)
+      .eq("status", "waitlist")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (wl) {
+      await supabase.from("match_request_participants").update({ status: "joined" }).eq("id", wl.id);
     }
-    await supabase.from("match_requests").update({ needed, waitlist_count: waitlist }).eq("id", requestId);
-  } else {
-    await supabase.from("match_requests").update({ waitlist_count: Math.max(0, (req.waitlist_count ?? 0) - 1) }).eq("id", requestId);
   }
 }
 
