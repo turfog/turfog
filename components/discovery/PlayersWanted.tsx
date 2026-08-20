@@ -27,8 +27,6 @@ import {
   BadmintonIcon,
 } from "@/components/SvgIcons";
 
-const PREFS = new Set<SportId>(["football", "badminton", "box-cricket"]);
-
 const sportIcon: Record<SportId, React.ReactNode> = {
   football: <FootballIcon size={12} />,
   "box-cricket": <CricketIcon size={12} />,
@@ -93,17 +91,6 @@ function urgency(ms: number): "critical" | "soon" | "calm" {
   return "calm";
 }
 
-function score(req: PlayerRequest, now: number): number {
-  const mins = (new Date(req.kickoffAt).getTime() - now) / 60000;
-  const timeScore = mins > 0 ? 1000 / (mins + 5) : 0;
-  const distScore = 100 / (req.distanceKm + 1);
-  const compat = PREFS.has(req.sport) ? 30 : 0;
-  const ver = req.verified ? 15 : 0;
-  const mut = (req.mutuals ?? 0) * 5;
-  const pop = req.waitlist > 0 ? 8 : 0;
-  return timeScore + distScore + compat + ver + mut + pop;
-}
-
 export default function PlayersWanted({ variant }: { variant: "rail" | "scroller" }) {
   const { requests, myActions, loading, join, leave, dismiss } = useDiscovery();
   const [now, setNow] = useState(0);
@@ -114,9 +101,9 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
     return () => clearInterval(id);
   }, []);
 
-  const visible = requests
-    .filter((r) => now === 0 || new Date(r.kickoffAt).getTime() - now > 0)
-    .sort((a, b) => score(b, now || Date.now()) - score(a, now || Date.now()));
+  const visible = requests.filter(
+    (r) => now === 0 || new Date(r.kickoffAt).getTime() - now > 0
+  );
 
   const handleJoin = (req: PlayerRequest) => {
     if (myActions[req.id]) return;
@@ -201,6 +188,16 @@ export default function PlayersWanted({ variant }: { variant: "rail" | "scroller
             <mt.Icon size={11} />
             {mt.label}
           </span>
+          {req.costSplitMode === "split" && req.costTotal && req.costTotal > 0 && req.capacity > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sunset-orange/10 text-caption text-sunset-orange font-semibold">
+              ₹{Math.ceil(req.costTotal / req.capacity)}/person
+            </span>
+          )}
+          {req.costSplitMode === "organizer_pays" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald/10 text-caption text-emerald font-semibold">
+              Free · host paying
+            </span>
+          )}
           <span className="px-2 py-0.5 rounded-md bg-neutral-100 text-caption text-neutral-600 font-medium capitalize">
             {req.skill === "any" ? "All levels" : req.skill}
           </span>

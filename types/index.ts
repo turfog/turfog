@@ -244,6 +244,9 @@ export interface PlayerRequest {
   matchType: MatchType;
   teamName?: string;
   mutuals?: number;
+  costTotal?: number;
+  costSplitMode?: "none" | "split" | "organizer_pays";
+  currency?: string;
 }
 // ----- Available players (live "I want to play" heartbeats) -----
 

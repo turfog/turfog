@@ -192,7 +192,7 @@ export async function fetchActiveRequests(): Promise<MatchRequestRow[]> {
     .from("match_requests")
     .select("*")
     .eq("is_active", true)
-    .order("kickoff_at", { ascending: true });
+    .order("created_at", { ascending: false });
   return (data ?? []) as MatchRequestRow[];
 }
 

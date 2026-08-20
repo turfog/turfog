@@ -104,6 +104,9 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
           matchType: safeMatchType(r.match_type),
           teamName: r.team_name ?? undefined,
           mutuals: undefined,
+          costTotal: typeof r.cost_total === "number" ? r.cost_total : 0,
+          costSplitMode: (r.cost_split_mode as "none" | "split" | "organizer_pays") ?? "none",
+          currency: r.currency ?? "INR",
         };
       });
     if (lat != null && lng != null) return mapped.filter((m) => m.distanceKm <= radius || m.distanceKm === 0);
