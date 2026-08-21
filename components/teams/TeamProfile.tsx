@@ -9,6 +9,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { createClient } from "@/lib/supabase";
 import { fetchTeamBySlug, fetchTeamMembers, fetchTeamPosts, joinTeam, followTeam, respondToInvite } from "@/lib/teams";
+import TeamStatsCard from "@/components/teams/TeamStatsCard";
 import type { Team, TeamMember, TeamPost } from "@/lib/teams";
 import type { SportId } from "@/types";
 import {
@@ -240,6 +241,10 @@ export default function TeamProfile({ slug }: { slug: string }) {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-6 mb-6">
+        <TeamStatsCard teamId={team.id} />
       </div>
 
       <div className="max-w-3xl mx-auto px-6 pb-16">
