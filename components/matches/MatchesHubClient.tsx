@@ -204,6 +204,10 @@ function MatchRow({ match, myId, stats, onStatsSaved }: { match: Match; myId: st
               {match.verificationStatus === "verified" ? <CheckCircleIcon size={11} /> : <ClockIcon size={11} />}
               {match.verificationStatus === "verified" ? "Verified" : "Pending"}
             </span>
+            <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold", match.verificationStatus === "verified" ? "bg-emerald/10 text-emerald" : "bg-amber/10 text-amber")}>
+              {match.verificationStatus === "verified" ? <CheckCircleIcon size={11} /> : <ClockIcon size={11} />}
+              {match.verificationStatus === "verified" ? "Verified" : "Pending"}
+            </span>
           </div>
         </div>
         {myId && (
@@ -212,6 +216,9 @@ function MatchRow({ match, myId, stats, onStatsSaved }: { match: Match; myId: st
           ) : (
             <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>{open ? "Close" : "Log my stats"}</Button>
           )
+        )}
+        {canVerify && (
+          <Button size="sm" variant="primary" loading={verifying} onClick={onVerify}>Confirm result</Button>
         )}
         {canVerify && (
           <Button size="sm" variant="primary" loading={verifying} onClick={onVerify}>Confirm result</Button>
