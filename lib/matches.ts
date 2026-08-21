@@ -46,6 +46,8 @@ export async function recordMatch(input: {
   scoreA: number;
   scoreB: number;
   venue: string;
+  teamAId?: string | null;
+  teamBId?: string | null;
 }): Promise<string | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -60,6 +62,8 @@ export async function recordMatch(input: {
       score_b: input.scoreB,
       venue: input.venue,
       created_by: user.id,
+      team_a_id: input.teamAId ?? null,
+      team_b_id: input.teamBId ?? null,
     })
     .select("id")
     .single();
