@@ -7,6 +7,8 @@ import { cn, timeAgo } from "@/lib/utils";
 import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
 import { toggleFollow } from "@/lib/social";
+import { fetchPlayerStats } from "@/lib/matches";
+import type { PlayerStats } from "@/lib/matches";
 import type { SportId } from "@/types";
 import type { ProfilePayload, ProfilePost, OrganizedMatch } from "@/lib/profile";
 import {
@@ -106,6 +108,13 @@ export default function PublicProfile({ payload }: { payload: ProfilePayload }) 
   const { view, posts, organized, viewer } = payload;
   const [following, setFollowing] = useState(viewer.following);
   const [tab, setTab] = useState<"overview" | "activity">("overview");
+  const [perfStats, setPerfStats] = useState<PlayerStats | null>(null);
+
+  useEffect(() => {
+    if (view.id) {
+      fetchPlayerStats(view.id).then(setPerfStats);
+    }
+  }, [view.id]);
   const isMe = !!viewer.myUsername && viewer.myUsername === view.username;
   const presence = presenceMeta(view.presence);
   const cover = view.primarySport ? coverGradient[view.primarySport] : "from-neutral-700 to-neutral-900";
@@ -235,6 +244,29 @@ export default function PublicProfile({ payload }: { payload: ProfilePayload }) 
         </div>
       </motion.div>
 
+      {perfStats && perfStats.matchesPlayed > 0 && (
+        <motion.div variants={reveal} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto px-6 mb-6">
+          <div className="surface-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[14px] font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
+                <RunIcon size={16} className="text-neutral-400" />
+                On-Field Performance
+              </h2>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200/60 text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
+                <ShieldIcon size={11} />
+                Verified Only
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <StatTile label="Matches" value={perfStats.matchesPlayed} />
+              <StatTile label="Goals" value={perfStats.goals} />
+              <StatTile label="Assists" value={perfStats.assists} />
+              <StatTile label="MVPs" value={perfStats.mvps} />
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <div className="max-w-3xl mx-auto px-6 pb-16">
         <div className="flex gap-1 border-b border-neutral-200 mb-6">
           {(["overview", "activity"] as const).map((t) => (
@@ -318,6 +350,15 @@ function MatchTile({ match }: { match: OrganizedMatch }) {
       <Badge variant={full ? "success" : "warning"} size="sm" animated={false}>
         {full ? "Full" : `${match.needed} slots`}
       </Badge>
+    </div>
+  );
+}
+
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl bg-black/[0.02] border border-black/[0.05] px-3 py-4 text-center">
+      <p className="text-[22px] font-bold font-display text-neutral-900"><CountUp value={value} /></p>
+      <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mt-1">{label}</p>
     </div>
   );
 }
