@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase";
 import { fetchUserTeams, registerTeamForTournament } from "@/lib/tournaments";
+import TournamentBrackets from "@/components/tournaments/TournamentBrackets";
 import { TrophyIcon, MapPinIcon, CalendarIcon, UsersIcon, ArrowLeftIcon, XIcon, CheckCircleIcon } from "@/components/SvgIcons";
 
 interface TournamentDetail {
@@ -137,6 +138,8 @@ export default function TournamentDetailClient({ slug }: { slug: string }) {
           </div>
         )}
       </div>
+
+      <TournamentBrackets tournamentId={tournament.id} />
 
       {/* Premium Registration Modal */}
       <AnimatePresence>
