@@ -110,7 +110,12 @@ export async function logPlayerStat(matchId: string, userId: string, stats: Stat
 
 export async function fetchPlayerStats(userId: string): Promise<PlayerStats> {
   const supabase = createClient();
-  const { data } = await supabase.from("player_match_stats").select("*").eq("user_id", userId);
+  // Only count stats from VERIFIED matches (trust layer for individual players)
+  const { data } = await supabase
+    .from("player_match_stats")
+    .select("*, matches!inner(verification_status)")
+    .eq("user_id", userId)
+    .eq("matches.verification_status", "verified");
   const list = (data ?? []) as Row[];
   const matchIds = new Set<string>();
   let goals = 0, assists = 0, runs = 0, wickets = 0, saves = 0, points = 0, mvps = 0;
