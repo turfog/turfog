@@ -1,0 +1,162 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Activity, UserPlus, Trophy, MessageSquare, ShoppingBag, 
+  AlertTriangle, Zap, TrendingUp, Globe 
+} from "lucide-react";
+
+type EventType = "registration" | "match_created" | "match_completed" | "post_published" | "order_placed" | "report_filed";
+
+interface PlatformEvent {
+  id: string;
+  type: EventType;
+  title: string;
+  meta: string;
+  timestamp: Date;
+  severity: "info" | "success" | "warning" | "critical";
+}
+
+const eventConfig: Record<EventType, { icon: any; color: string; bg: string }> = {
+  registration: { icon: UserPlus, color: "text-blue-600", bg: "bg-blue-50" },
+  match_created: { icon: Trophy, color: "text-emerald-600", bg: "bg-emerald-50" },
+  match_completed: { icon: Activity, color: "text-purple-600", bg: "bg-purple-50" },
+  post_published: { icon: MessageSquare, color: "text-indigo-600", bg: "bg-indigo-50" },
+  order_placed: { icon: ShoppingBag, color: "text-amber-600", bg: "bg-amber-50" },
+  report_filed: { icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50" },
+};
+
+const initialEvents: PlatformEvent[] = [
+  { id: "1", type: "match_created", title: "New 5v5 Football match created", meta: "Andheri Turf • Mumbai", timestamp: new Date(), severity: "success" },
+  { id: "2", type: "registration", title: "Priya Patel joined Turfog", meta: "via Instagram Ad • Bangalore", timestamp: new Date(Date.now() - 4000), severity: "info" },
+  { id: "3", type: "order_placed", title: "Marketplace Order #9921 placed", meta: "₹2,400 • Nike Mercurial Vapor", timestamp: new Date(Date.now() - 12000), severity: "info" },
+  { id: "4", type: "report_filed", title: "Post reported for Spam", meta: "Post #8832 by @vikky", timestamp: new Date(Date.now() - 25000), severity: "warning" },
+];
+
+const incomingTemplates: Omit<PlatformEvent, "id" | "timestamp">[] = [
+  { type: "registration", title: "New user registered", meta: "via Organic Search • Delhi", severity: "info" },
+  { type: "match_created", title: "Box Cricket match scheduled", meta: "Bandra Turf • Mumbai", severity: "success" },
+  { type: "match_completed", title: "Match verified by both captains", meta: "Final Score: 4-2", severity: "success" },
+  { type: "post_published", title: "New viral moment shared", meta: "by @rahul_s • 120 likes", severity: "info" },
+  { type: "order_placed", title: "Pro Gear purchased", meta: "₹1,800 • SG Cricket Bat", severity: "info" },
+  { type: "report_filed", title: "User reported for no-show", meta: "Match #4412", severity: "warning" },
+];
+
+function timeAgo(date: Date, now: Date) {
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ago`;
+}
+
+export default function PulsePage() {
+  const [events, setEvents] = useState<PlatformEvent[]>(initialEvents);
+  const [now, setNow] = useState(new Date());
+
+  // Simulate real-time incoming events
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date()); // Force re-render to update "timeAgo" timestamps
+      
+      // 40% chance to inject a new event every 2.5 seconds
+      if (Math.random() < 0.4) {
+        const template = incomingTemplates[Math.floor(Math.random() * incomingTemplates.length)];
+        const newEvent: PlatformEvent = {
+          ...template,
+          id: Math.random().toString(36).substring(7),
+          timestamp: new Date(),
+        };
+        setEvents(prev => [newEvent, ...prev].slice(0, 25)); // Keep max 25 events
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const stats = [
+    { label: "Events / Min", value: "142", trend: "+12%", icon: Zap },
+    { label: "Active Users Now", value: "3,841", trend: "+4%", icon: Globe },
+    { label: "System Load", value: "24%", trend: "Stable", icon: TrendingUp },
+  ];
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-3">
+          <h1 className="text-[24px] font-bold text-neutral-900 tracking-tight">Platform Pulse</h1>
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            LIVE
+          </span>
+        </div>
+        <p className="text-[13px] text-neutral-500 mt-1">Real-time operational activity across the Turfog ecosystem.</p>
+      </div>
+
+      {/* Pulse Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {stats.map((stat) => (
+          <div key={stat.label} className="bg-white border border-neutral-200 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-600">
+              <stat.icon size={18} />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">{stat.label}</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-[20px] font-bold text-neutral-900">{stat.value}</p>
+                <span className="text-[11px] font-semibold text-emerald-600">{stat.trend}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Live Feed */}
+      <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="px-5 py-3 border-b border-neutral-200 bg-neutral-50/50 flex items-center justify-between">
+          <h2 className="text-[13px] font-semibold text-neutral-900">Live Activity Stream</h2>
+          <span className="text-[11px] text-neutral-500">Auto-updating</span>
+        </div>
+        
+        <div className="divide-y divide-neutral-100 max-h-[600px] overflow-y-auto">
+          <AnimatePresence initial={false}>
+            {events.map((event) => {
+              const config = eventConfig[event.type];
+              const Icon = config.icon;
+              return (
+                <motion.div
+                  key={event.id}
+                  layout
+                  initial={{ opacity: 0, backgroundColor: "rgba(16, 185, 129, 0.08)" }}
+                  animate={{ opacity: 1, backgroundColor: "rgba(255, 255, 255, 0)" }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="group flex items-center gap-4 px-5 py-3.5 hover:bg-neutral-50 transition-colors"
+                >
+                  <div className={`w-8 h-8 rounded-full ${config.bg} ${config.color} flex items-center justify-center flex-shrink-0`}>
+                    <Icon size={16} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-neutral-900 truncate">{event.title}</p>
+                    <p className="text-[11px] text-neutral-500 truncate">{event.meta}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[11px] font-medium text-neutral-400 tabular-nums">{timeAgo(event.timestamp, now)}</p>
+                  </div>
+                  <button className="text-[11px] font-semibold text-emerald-600 hover:underline opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    Inspect
+                  </button>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
