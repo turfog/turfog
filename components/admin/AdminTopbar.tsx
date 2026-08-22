@@ -1,12 +1,21 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Search, Bell, ChevronRight } from "lucide-react";
+import { Search, Bell, ChevronRight, LogOut } from "lucide-react";
+import { logoutAdmin } from "@/app/admin/login/actions";
+import { useRouter } from "next/navigation";
 import { useCommandPalette } from "./CommandPalette";
 
 export function AdminTopbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { setOpen } = useCommandPalette();
+
+  const handleLogout = async () => {
+    await logoutAdmin();
+    router.push("/admin/login");
+    router.refresh();
+  };
 
   // Generate breadcrumbs from pathname
   const crumbs = pathname.split("/").filter(Boolean).map(c => c.charAt(0).toUpperCase() + c.slice(1));
@@ -43,11 +52,12 @@ export function AdminTopbar() {
 
         <div className="h-6 w-px bg-neutral-200 mx-1" />
 
-        <button className="flex items-center gap-2 p-1 pr-3 hover:bg-neutral-100 rounded-lg transition-colors">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-neutral-700 to-neutral-900 flex items-center justify-center text-white text-[11px] font-bold">
-            AD
-          </div>
-          <span className="text-[13px] font-medium text-neutral-700">Admin</span>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-2 p-2 text-neutral-500 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-colors"
+          title="Logout"
+        >
+          <LogOut size={18} />
         </button>
       </div>
     </header>
