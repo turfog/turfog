@@ -1,12 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { SPORTS, SKILL_LEVELS } from "@/lib/constants";
 import type { SportId, MatchType } from "@/types";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
 import { useLocation } from "@/context/LocationContext";
 import { createMatchRequest, searchPlaces, reverseGeocode } from "@/lib/discovery";
 import {
@@ -15,6 +14,7 @@ import {
   ZapIcon,
   CheckCircleIcon,
   ClockIcon,
+  ArrowRightIcon,
   FootballIcon,
   CricketIcon,
   PickleballIcon,
@@ -149,65 +149,139 @@ export default function LookingForPlayer() {
 
   if (posted) {
     return (
-      <Card className="border-sunset-orange/30 bg-gradient-to-br from-sunset-orange/5 to-white">
-        <div className="text-center py-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-emerald/10 rounded-2xl mb-3">
-            <CheckCircleIcon size={28} className="text-emerald" />
+      <div className="surface-card overflow-hidden border-orange-500/30">
+        <div className="bg-gradient-to-br from-orange-500/[0.08] to-transparent p-6">
+          <div className="text-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl mb-4 shadow-[0_8px_24px_-6px_rgba(16,185,129,0.4)]"
+            >
+              <CheckCircleIcon size={32} className="text-white" />
+            </motion.div>
+            <h3 className="text-[18px] font-bold text-neutral-900 mb-2">Request posted!</h3>
+            <p className="text-[13px] text-neutral-600 mb-2">
+              Looking for {playersNeeded} more {selectedSport} player{playersNeeded > 1 ? "s" : ""} ({totalPlayers} total).
+            </p>
+            {costMode === "split" && costPerPerson > 0 && (
+              <p className="text-[13px] font-semibold text-neutral-700 mb-2">
+                ₹{costPerPerson}/person (₹{Number(costTotal)} ÷ {totalPlayers} players)
+              </p>
+            )}
+            {costMode === "organizer_pays" && (
+              <p className="text-[13px] font-semibold text-emerald-700 mb-2">
+                Free for all players — you're covering it. 🎉
+              </p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-2 justify-center mt-5">
+              <Link
+                href="/looking-for-players"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-br from-orange-500 via-rose-500 to-red-600 text-white text-[13px] font-semibold shadow-[0_8px_24px_-6px_rgba(244,63,94,0.4)] hover:shadow-[0_12px_32px_-8px_rgba(244,63,94,0.5)] transition-shadow"
+              >
+                <UsersIcon size={15} />
+                View all matches
+              </Link>
+              <button
+                onClick={reset}
+                className="px-5 py-2.5 rounded-xl border border-black/[0.08] text-neutral-700 text-[13px] font-semibold hover:bg-black/[0.02] transition-colors"
+              >
+                Post another
+              </button>
+            </div>
           </div>
-          <h3 className="text-body-md font-semibold text-neutral-900 mb-1">Request posted</h3>
-          <p className="text-body-xs text-neutral-500 mb-2">
-            Looking for {playersNeeded} more {selectedSport} player{playersNeeded > 1 ? "s" : ""} ({totalPlayers} total).
-          </p>
-          {costMode === "split" && costPerPerson > 0 && (
-            <p className="text-body-xs font-medium text-neutral-700 mb-2">₹{costPerPerson}/person (₹{Number(costTotal)} ÷ {totalPlayers} players)</p>
-          )}
-          {costMode === "organizer_pays" && (
-            <p className="text-body-xs font-medium text-emerald mb-2">Free for all players — you're covering it. 🎉</p>
-          )}
-          <Button variant="outline" size="sm" onClick={reset}>Post another</Button>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card
-      className={cn("transition-all duration-300 cursor-pointer group", isExpanded ? "border-sunset-orange/40 shadow-glow-orange" : "hover:border-sunset-orange/20")}
-      onClick={() => !isExpanded && setIsExpanded(true)}
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 bg-sunset-orange/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-sunset-orange/15 transition-colors">
-          <UsersIcon size={22} className="text-sunset-orange" />
+    <div className="surface-card overflow-hidden">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-orange-500/[0.06] to-transparent p-6 pb-5">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 via-rose-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-[0_6px_16px_-4px_rgba(244,63,94,0.4)]">
+              <UsersIcon size={24} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-[17px] font-bold text-neutral-900 mb-0.5">Looking for a player</h3>
+              <p className="text-[12px] text-neutral-600">Post a live request and fill your squad</p>
+            </div>
+          </div>
+          <Link
+            href="/looking-for-players"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500/[0.08] text-orange-700 text-[11px] font-bold uppercase tracking-wider border border-orange-500/20 hover:bg-orange-500/[0.12] transition-colors"
+          >
+            View all
+            <ArrowRightIcon size={12} />
+          </Link>
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-body-sm font-semibold text-neutral-900">Looking for a player</h3>
-          <p className="text-body-xs text-neutral-500">Post a live request nearby</p>
-        </div>
-        <ZapIcon size={18} className={cn("text-neutral-300 transition-colors", isExpanded ? "text-sunset-orange" : "group-hover:text-sunset-orange")} />
+
+        {/* Expand Trigger */}
+        {!isExpanded && (
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-orange-500 via-rose-500 to-red-600 text-white text-[13px] font-semibold shadow-[0_8px_24px_-6px_rgba(244,63,94,0.4)] hover:shadow-[0_12px_32px_-8px_rgba(244,63,94,0.5)] transition-shadow"
+          >
+            <ZapIcon size={15} />
+            Post live request
+          </button>
+        )}
       </div>
 
+      {/* Expanded Form */}
       <AnimatePresence>
         {isExpanded && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
-            <div className="pt-4 mt-4 border-t border-neutral-100 space-y-4">
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="p-6 pt-5 space-y-5 border-t border-black/[0.06]">
               <div>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Sport</label>
+                <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                  Sport
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {SPORTS.map((sport) => (
-                    <motion.button key={sport.id} whileTap={{ scale: 0.94 }} onClick={(e) => { e.stopPropagation(); setSelectedSport(sport.id); }}
-                      className={cn("flex items-center gap-1.5 px-3 py-2 rounded-xl text-body-xs font-medium border transition-all", selectedSport === sport.id ? "bg-sunset-orange text-white border-sunset-orange" : "bg-white text-neutral-600 border-neutral-200 hover:border-sunset-orange/40")}>
-                      {sportIconMap[sport.id]}{sport.name}
+                    <motion.button
+                      key={sport.id}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => setSelectedSport(sport.id)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold border transition-all",
+                        selectedSport === sport.id
+                          ? "bg-gradient-to-br from-orange-500 to-rose-600 text-white border-orange-500 shadow-sm"
+                          : "bg-white text-neutral-600 border-black/[0.08] hover:border-orange-500/40"
+                      )}
+                    >
+                      {sportIconMap[sport.id]}
+                      {sport.name}
                     </motion.button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Skill level needed</label>
+                <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                  Skill level needed
+                </label>
                 <div className="flex gap-2">
                   {SKILL_LEVELS.map((level) => (
-                    <motion.button key={level} whileTap={{ scale: 0.94 }} onClick={(e) => { e.stopPropagation(); setSelectedSkill(level); }}
-                      className={cn("flex-1 px-3 py-2 rounded-xl text-body-xs font-medium border capitalize transition-all", selectedSkill === level ? "bg-sunset-orange text-white border-sunset-orange" : "bg-white text-neutral-600 border-neutral-200 hover:border-sunset-orange/40")}>
+                    <motion.button
+                      key={level}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => setSelectedSkill(level)}
+                      className={cn(
+                        "flex-1 px-3 py-2 rounded-xl text-[12px] font-semibold border capitalize transition-all",
+                        selectedSkill === level
+                          ? "bg-gradient-to-br from-orange-500 to-rose-600 text-white border-orange-500 shadow-sm"
+                          : "bg-white text-neutral-600 border-black/[0.08] hover:border-orange-500/40"
+                      )}
+                    >
                       {level}
                     </motion.button>
                   ))}
@@ -215,11 +289,21 @@ export default function LookingForPlayer() {
               </div>
 
               <div>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Match type</label>
+                <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                  Match type
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {MATCH_TYPES.map((t) => (
-                    <button key={t} onClick={(e) => { e.stopPropagation(); setMatchType(t); }}
-                      className={cn("px-3 py-1.5 rounded-full text-caption font-medium border capitalize transition-all", matchType === t ? "bg-neutral-900 text-white border-neutral-900" : "bg-white text-neutral-500 border-neutral-200 hover:border-neutral-300")}>
+                    <button
+                      key={t}
+                      onClick={() => setMatchType(t)}
+                      className={cn(
+                        "px-3 py-2 rounded-xl text-[12px] font-semibold border capitalize transition-all",
+                        matchType === t
+                          ? "bg-neutral-900 text-white border-neutral-900 shadow-sm"
+                          : "bg-white text-neutral-600 border-black/[0.08] hover:border-black/[0.15]"
+                      )}
+                    >
                       {t}
                     </button>
                   ))}
@@ -228,107 +312,218 @@ export default function LookingForPlayer() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-body-xs font-medium text-neutral-700 mb-2 block">I already have</label>
+                  <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                    I already have
+                  </label>
                   <div className="flex items-center gap-2">
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersInHand(Math.max(0, playersInHand - 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">-</motion.button>
-                    <span className="text-display-xs font-bold text-neutral-900 w-8 text-center">{playersInHand}</span>
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersInHand(Math.min(21, playersInHand + 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">+</motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setPlayersInHand(Math.max(0, playersInHand - 1))}
+                      className="w-10 h-10 rounded-xl border border-black/[0.08] flex items-center justify-center text-neutral-600 hover:border-orange-500/40 transition-colors text-[16px] font-bold"
+                    >
+                      -
+                    </motion.button>
+                    <span className="text-[20px] font-bold text-neutral-900 w-8 text-center">{playersInHand}</span>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setPlayersInHand(Math.min(21, playersInHand + 1))}
+                      className="w-10 h-10 rounded-xl border border-black/[0.08] flex items-center justify-center text-neutral-600 hover:border-orange-500/40 transition-colors text-[16px] font-bold"
+                    >
+                      +
+                    </motion.button>
                   </div>
                 </div>
                 <div>
-                  <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Looking for</label>
+                  <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                    Looking for
+                  </label>
                   <div className="flex items-center gap-2">
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersNeeded(Math.max(1, playersNeeded - 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">-</motion.button>
-                    <span className="text-display-xs font-bold text-sunset-orange w-8 text-center">{playersNeeded}</span>
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); setPlayersNeeded(Math.min(22, playersNeeded + 1)); }} className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-600 hover:border-sunset-orange/40 transition-colors text-body-md font-bold">+</motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setPlayersNeeded(Math.max(1, playersNeeded - 1))}
+                      className="w-10 h-10 rounded-xl border border-black/[0.08] flex items-center justify-center text-neutral-600 hover:border-orange-500/40 transition-colors text-[16px] font-bold"
+                    >
+                      -
+                    </motion.button>
+                    <span className="text-[20px] font-bold text-orange-600 w-8 text-center">{playersNeeded}</span>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setPlayersNeeded(Math.min(22, playersNeeded + 1))}
+                      className="w-10 h-10 rounded-xl border border-black/[0.08] flex items-center justify-center text-neutral-600 hover:border-orange-500/40 transition-colors text-[16px] font-bold"
+                    >
+                      +
+                    </motion.button>
                   </div>
                 </div>
               </div>
-              <p className="text-caption text-neutral-400 -mt-2">Total squad: <span className="font-semibold text-neutral-700">{totalPlayers}</span> players</p>
+              <p className="text-[11px] text-neutral-500 -mt-2">
+                Total squad: <span className="font-bold text-neutral-700">{totalPlayers}</span> players
+              </p>
 
-              <div onClick={(e) => e.stopPropagation()}>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Venue / turf name</label>
-                <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Champions Turf"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-sunset-orange focus:ring-2 focus:ring-sunset-orange/20 transition-all" />
+              <div>
+                <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                  Venue / turf name
+                </label>
+                <input
+                  value={venue}
+                  onChange={(e) => setVenue(e.target.value)}
+                  placeholder="e.g. Champions Turf"
+                  className="w-full px-3.5 py-3 rounded-xl border border-black/[0.08] bg-white text-[13px] text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/[0.08] transition-all"
+                />
               </div>
 
-              <div onClick={(e) => e.stopPropagation()}>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Venue location</label>
+              <div>
+                <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                  Venue location
+                </label>
                 <div className="space-y-2">
                   <div className="relative">
                     <MapPinIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                    <input value={venueQuery} onChange={(e) => onVenueQuery(e.target.value)} placeholder="Search address / area on map"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-sunset-orange focus:ring-2 focus:ring-sunset-orange/20 transition-all" />
-                    {searching && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-caption text-neutral-400">…</span>}
+                    <input
+                      value={venueQuery}
+                      onChange={(e) => onVenueQuery(e.target.value)}
+                      placeholder="Search address / area on map"
+                      className="w-full pl-9 pr-3 py-3 rounded-xl border border-black/[0.08] bg-white text-[13px] text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/[0.08] transition-all"
+                    />
+                    {searching && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-neutral-400">…</span>
+                    )}
                   </div>
                   {venueSuggestions.length > 0 && (
-                    <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-card max-h-40 overflow-y-auto">
+                    <div className="bg-white border border-black/[0.08] rounded-xl overflow-hidden shadow-lg max-h-40 overflow-y-auto">
                       {venueSuggestions.map((s, i) => (
-                        <button key={i} onClick={() => pickSuggestion(s)} className="w-full text-left px-3 py-2 text-caption text-neutral-600 hover:bg-neutral-50 border-b border-neutral-100 last:border-0">
+                        <button
+                          key={i}
+                          onClick={() => pickSuggestion(s)}
+                          className="w-full text-left px-3 py-2.5 text-[12px] text-neutral-600 hover:bg-orange-500/[0.04] border-b border-black/[0.04] last:border-0 transition-colors"
+                        >
                           {s.name}
                         </button>
                       ))}
                     </div>
                   )}
-                  <button onClick={useMyLocation} className="text-caption font-medium text-electric-blue hover:underline">Use my current location</button>
+                  <button
+                    onClick={useMyLocation}
+                    className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+                  >
+                    Use my current location
+                  </button>
                   {venueLat != null && venueLng != null && (
-                    <div className="space-y-1">
-                      <iframe title="Venue map" className="w-full h-32 rounded-xl border border-neutral-200" src={osmEmbed(venueLat, venueLng)} />
-                      {venueAddress && <p className="text-caption text-neutral-400">{venueAddress}</p>}
+                    <div className="space-y-1.5">
+                      <iframe
+                        title="Venue map"
+                        className="w-full h-32 rounded-xl border border-black/[0.08]"
+                        src={osmEmbed(venueLat, venueLng)}
+                      />
+                      {venueAddress && <p className="text-[11px] text-neutral-500">{venueAddress}</p>}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div onClick={(e) => e.stopPropagation()}>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Total turf / venue cost (₹)</label>
+              <div>
+                <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                  Total turf / venue cost (₹)
+                </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-body-xs font-semibold text-neutral-500">₹</span>
-                  <input type="number" min={0} value={costTotal} onChange={(e) => onCostChange(e.target.value)} placeholder="e.g. 1000 (0 for free)"
-                    className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-sunset-orange focus:ring-2 focus:ring-sunset-orange/20 transition-all" />
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-neutral-500">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={costTotal}
+                    onChange={(e) => onCostChange(e.target.value)}
+                    placeholder="e.g. 1000 (0 for free)"
+                    className="w-full pl-8 pr-3.5 py-3 rounded-xl border border-black/[0.08] bg-white text-[13px] text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/[0.08] transition-all"
+                  />
                 </div>
                 {Number(costTotal) > 0 && totalPlayers > 0 && (
                   <div className="flex items-center justify-between mt-2 px-1">
-                    <span className="text-caption text-neutral-500">₹{Number(costTotal)} ÷ {totalPlayers} players</span>
-                    <span className="text-body-xs font-bold text-sunset-orange">= ₹{costPerPerson}/person</span>
+                    <span className="text-[11px] text-neutral-500">
+                      ₹{Number(costTotal)} ÷ {totalPlayers} players
+                    </span>
+                    <span className="text-[12px] font-bold text-orange-600">= ₹{costPerPerson}/person</span>
                   </div>
                 )}
               </div>
 
-              <div onClick={(e) => e.stopPropagation()}>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Who pays?</label>
+              <div>
+                <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                  Who pays?
+                </label>
                 <div className="flex gap-2">
                   {COST_MODES.map((m) => (
-                    <button key={m.id} onClick={() => setCostMode(m.id)}
-                      className={cn("flex-1 px-3 py-2 rounded-xl text-body-xs font-medium border transition-all", costMode === m.id ? "bg-sunset-orange text-white border-sunset-orange" : "bg-white text-neutral-600 border-neutral-200 hover:border-sunset-orange/40")}>
+                    <button
+                      key={m.id}
+                      onClick={() => setCostMode(m.id)}
+                      className={cn(
+                        "flex-1 px-3 py-2 rounded-xl text-[12px] font-semibold border transition-all",
+                        costMode === m.id
+                          ? "bg-gradient-to-br from-orange-500 to-rose-600 text-white border-orange-500 shadow-sm"
+                          : "bg-white text-neutral-600 border-black/[0.08] hover:border-orange-500/40"
+                      )}
+                    >
                       {m.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div onClick={(e) => e.stopPropagation()}>
-                <label className="text-body-xs font-medium text-neutral-700 mb-2 block">Kick-off</label>
+              <div>
+                <label className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
+                  Kick-off
+                </label>
                 <div className="relative">
                   <ClockIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-                  <input type="datetime-local" value={kickoff} onChange={(e) => setKickoff(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-neutral-200 text-body-xs text-neutral-900 outline-none focus:border-sunset-orange focus:ring-2 focus:ring-sunset-orange/20 transition-all" />
+                  <input
+                    type="datetime-local"
+                    value={kickoff}
+                    onChange={(e) => setKickoff(e.target.value)}
+                    className="w-full pl-9 pr-3 py-3 rounded-xl border border-black/[0.08] bg-white text-[13px] text-neutral-900 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/[0.08] transition-all"
+                  />
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 text-body-xs text-neutral-400">
-                <MapPinIcon size={13} /><span>{label}</span>
+              <div className="flex items-center gap-1.5 text-[12px] text-neutral-500">
+                <MapPinIcon size={14} />
+                <span>{label}</span>
               </div>
 
-              {error && <p className="text-body-xs text-coral bg-coral/5 rounded-lg px-3 py-2">{error}</p>}
+              {error && (
+                <p className="text-[12px] text-coral bg-coral/[0.06] border border-coral/20 rounded-lg px-3 py-2.5">
+                  {error}
+                </p>
+              )}
 
-              <Button fullWidth loading={posting} onClick={handlePost} className="bg-sunset-orange hover:bg-sunset-orange/90">
-                <UsersIcon size={16} />Post live request
-              </Button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePost}
+                  disabled={posting}
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-orange-500 via-rose-500 to-red-600 text-white text-[13px] font-semibold shadow-[0_8px_24px_-6px_rgba(244,63,94,0.4)] hover:shadow-[0_12px_32px_-8px_rgba(244,63,94,0.5)] disabled:opacity-40 disabled:cursor-not-allowed transition-shadow"
+                >
+                  {posting ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                    />
+                  ) : (
+                    <UsersIcon size={15} />
+                  )}
+                  Post live request
+                </button>
+                <button
+                  onClick={reset}
+                  className="px-5 py-3 rounded-xl border border-black/[0.08] text-neutral-700 text-[13px] font-semibold hover:bg-black/[0.02] transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </Card>
+    </div>
   );
 }
