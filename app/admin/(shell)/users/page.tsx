@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { User360Drawer } from "@/components/admin/admin-ui/User360Drawer";
+
 import { DataTable, Column } from "@/components/admin/admin-ui/DataTable";
 import { Shield, CheckCircle2, AlertTriangle } from "lucide-react";
 
@@ -48,6 +51,7 @@ const columns: Column<typeof mockUsers[0]>[] = [
 ];
 
 export default function UsersPage() {
+  const [selectedUser, setSelectedUser] = useState<typeof mockUsers[0] | null>(null);
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -60,7 +64,9 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <DataTable columns={columns} data={mockUsers} pageSize={8} onRowClick={(row) => console.log("Open 360 for", row.id)} />
+      <DataTable columns={columns} data={mockUsers} pageSize={8} onRowClick={(row) => setSelectedUser(row)} />
+      
+      <User360Drawer user={selectedUser} onClose={() => setSelectedUser(null)} />
     </div>
   );
 }
