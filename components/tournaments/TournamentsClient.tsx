@@ -1,181 +1,131 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import EmptyState from "@/components/ui/EmptyState";
-import Skeleton from "@/components/ui/Skeleton";
-import { fetchTournaments, createTournament } from "@/lib/tournaments";
+import { fetchTournaments } from "@/lib/tournaments";
 import type { Tournament } from "@/lib/tournaments";
-import { ArrowLeftIcon, TrophyIcon, PlusIcon, XIcon, MapPinIcon, CalendarIcon } from "@/components/SvgIcons";
+import { TrophyIcon, MapPinIcon, CalendarIcon, UsersIcon, FootballIcon, CricketIcon, PickleballIcon, PadelIcon, BadmintonIcon, ArrowLeftIcon } from "@/components/SvgIcons";
 
-const SPORTS = ["football", "box-cricket", "badminton", "pickleball", "padel"];
+const sportIcon: Record<string, React.ReactNode> = {
+  football: <FootballIcon size={20} />,
+  "box-cricket": <CricketIcon size={20} />,
+  pickleball: <PickleballIcon size={20} />,
+  padel: <PadelIcon size={20} />,
+  badminton: <BadmintonIcon size={20} />,
+};
 
-function statusMeta(status: string): { label: string; cls: string } {
-  switch (status) {
-    case "registration": return { label: "Registration open", cls: "bg-electric-blue/10 text-electric-blue" };
-    case "ongoing": return { label: "Ongoing", cls: "bg-emerald/10 text-emerald" };
-    case "completed": return { label: "Completed", cls: "bg-neutral-100 text-neutral-500" };
-    default: return { label: status, cls: "bg-neutral-100 text-neutral-500" };
-  }
-}
-
-function formatDate(iso: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
-function TournamentSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-card p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Skeleton className="w-11 h-11 rounded-xl flex-shrink-0" />
-          <div className="space-y-2">
-            <Skeleton className="h-3 w-32" />
-            <Skeleton className="h-2.5 w-40" />
-          </div>
-        </div>
-        <Skeleton className="h-6 w-20 rounded-full flex-shrink-0" />
-      </div>
-    </div>
-  );
-}
+const statusMeta: Record<string, { label: string; cls: string; dot: string }> = {
+  upcoming: { label: "Upcoming", cls: "bg-blue-500/[0.08] text-blue-600 border-blue-500/20", dot: "bg-blue-500" },
+  live: { label: "Live Now", cls: "bg-emerald-500/[0.08] text-emerald-600 border-emerald-500/20", dot: "bg-emerald-500 animate-pulse" },
+  completed: { label: "Completed", cls: "bg-neutral-500/[0.08] text-neutral-500 border-neutral-500/20", dot: "bg-neutral-400" },
+};
 
 export default function TournamentsClient() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const [name, setName] = useState("");
-  const [sport, setSport] = useState("football");
-  const [format, setFormat] = useState<"league" | "knockout">("league");
-  const [city, setCity] = useState("");
-  const [description, setDescription] = useState("");
-  const [startsAt, setStartsAt] = useState("");
-
-  const refresh = useCallback(async () => {
-    setTournaments(await fetchTournaments());
-    setLoading(false);
-  }, []);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  const onCreate = async () => {
-    if (busy || !name.trim()) return;
-    setBusy(true);
-    await createTournament({ name: name.trim(), sport, city: city.trim(), description: description.trim(), startsAt, format });
-    setBusy(false);
-    setShowCreate(false);
-    setName(""); setCity(""); setDescription(""); setStartsAt("");
-    await refresh();
-  };
+    fetchTournaments().then((data) => {
+      setTournaments(data);
+      setLoading(false);
+    });
+  }, []);
 
   return (
-    <div className="min-h-screen bg-neutral-100">
-      <div className="bg-white border-b border-neutral-200">
-        <div className="max-w-3xl mx-auto px-6 py-6">
-          <Link href="/" className="flex items-center gap-2 text-body-xs text-neutral-400 hover:text-neutral-600 transition-colors mb-2">
-            <ArrowLeftIcon size={14} />
-            Home
-          </Link>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <TrophyIcon size={22} className="text-primary-green" />
-              <h1 className="text-display-sm font-bold text-neutral-900 font-display">Tournaments</h1>
-            </div>
-            <Button size="sm" variant="primary" onClick={() => setShowCreate((v) => !v)}>
-              {showCreate ? <XIcon size={15} /> : <PlusIcon size={15} />}
-              {showCreate ? "Close" : "Create tournament"}
-            </Button>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors mb-4">
+          <ArrowLeftIcon size={16} />
+          Back to Home
+        </Link>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-[0_8px_24px_-6px_rgba(245,158,11,0.4)]">
+            <TrophyIcon size={20} className="text-white" />
           </div>
-          <p className="text-body-sm text-neutral-500">Organize leagues, register teams, and track standings.</p>
+          <div>
+            <h1 className="text-[28px] font-bold font-display text-neutral-900 tracking-tight">Tournaments</h1>
+            <p className="text-[14px] text-neutral-500">Compete, climb the brackets, and claim the trophy.</p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
-        {showCreate && (
-          <Card padding="lg">
-            <h3 className="text-body-sm font-semibold text-neutral-900 mb-3">Create a tournament</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tournament name" className="px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green placeholder:text-neutral-400" />
-              <select value={sport} onChange={(e) => setSport(e.target.value)} className="px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm bg-white outline-none focus:border-primary-green capitalize">
-                {SPORTS.map((s) => <option key={s} value={s}>{s.replace("-", " ")}</option>)}
-              </select>
-              <div className="flex gap-2 sm:col-span-2">
-                <button
-                  type="button"
-                  onClick={() => setFormat("league")}
-                  className={`flex-1 px-3.5 py-2.5 rounded-xl border text-body-sm font-medium transition-colors ${format === "league" ? "bg-primary-green text-white border-primary-green" : "bg-white text-neutral-600 border-neutral-200"}`}
-                >
-                  League
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormat("knockout")}
-                  className={`flex-1 px-3.5 py-2.5 rounded-xl border text-body-sm font-medium transition-colors ${format === "knockout" ? "bg-primary-green text-white border-primary-green" : "bg-white text-neutral-600 border-neutral-200"}`}
-                >
-                  Knockout
-                </button>
-              </div>
-              <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green placeholder:text-neutral-400" />
-              <input type="date" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green" />
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="surface-card p-5 animate-pulse space-y-4">
+              <div className="h-4 w-24 bg-black/[0.06] rounded-full" />
+              <div className="h-6 w-3/4 bg-black/[0.08] rounded-full" />
+              <div className="h-3 w-1/2 bg-black/[0.04] rounded-full" />
             </div>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" rows={2} className="w-full mt-3 px-3.5 py-2.5 rounded-xl border border-neutral-200 text-body-sm outline-none focus:border-primary-green resize-none placeholder:text-neutral-400" />
-            <Button fullWidth loading={busy} disabled={!name.trim()} onClick={onCreate} className="mt-3">Create tournament</Button>
-          </Card>
-        )}
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TournamentSkeleton />
-            <TournamentSkeleton />
-            <TournamentSkeleton />
-            <TournamentSkeleton />
-          </div>
-        ) : tournaments.length === 0 ? (
-          <Card padding="lg">
-            <EmptyState
-              icon={<TrophyIcon size={24} />}
-              title="No tournaments yet"
-              description="Create the first league and invite teams to compete."
-            />
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {tournaments.map((t) => {
-              const sm = statusMeta(t.status);
-              return (
-                <Link key={t.id} href={`/tournaments/${t.slug}`}>
-                  <Card padding="md" className="hover:border-primary-green/30 hover:-translate-y-0.5 hover:shadow-card-hover h-full">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-xl bg-primary-green/10 text-primary-green flex items-center justify-center flex-shrink-0"><TrophyIcon size={22} /></div>
-                        <div className="min-w-0">
-                          <p className="text-body-sm font-semibold text-neutral-900 truncate">{t.name}</p>
-                          <div className="flex flex-wrap items-center gap-2 text-caption text-neutral-400 mt-0.5">
-                            <span className="capitalize">{t.sport.replace("-", " ")}</span>
-                            {t.city && <span className="flex items-center gap-0.5"><MapPinIcon size={11} />{t.city}</span>}
-                            {t.startsAt && <span className="flex items-center gap-0.5"><CalendarIcon size={11} />{formatDate(t.startsAt)}</span>}
-                          </div>
-                        </div>
+          ))}
+        </div>
+      ) : tournaments.length === 0 ? (
+        <div className="surface-card p-12 text-center">
+          <TrophyIcon size={40} className="mx-auto text-neutral-300 mb-3" />
+          <h3 className="text-[16px] font-semibold text-neutral-900 mb-1">No tournaments yet</h3>
+          <p className="text-[13px] text-neutral-500">Be the first to organize a local cup.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {tournaments.map((t, idx) => {
+            const meta = statusMeta[t.status] || statusMeta.upcoming;
+            return (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 280, damping: 24, delay: idx * 0.05 }}
+              >
+                <Link href={`/tournaments/${t.slug}`} className="block group">
+                  <div className="surface-card p-5 h-full flex flex-col group-hover:border-emerald-500/30 transition-all">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider border", meta.cls)}>
+                        <span className={cn("w-1.5 h-1.5 rounded-full", meta.dot)} />
+                        {meta.label}
+                      </span>
+                      <div className="w-9 h-9 rounded-xl bg-black/[0.03] border border-black/[0.06] flex items-center justify-center text-neutral-600 group-hover:bg-emerald-500/[0.08] group-hover:text-emerald-600 group-hover:border-emerald-500/20 transition-all">
+                        {sportIcon[t.sport] || <TrophyIcon size={18} />}
                       </div>
-                      <span className={cn("px-2.5 py-1 rounded-full text-caption font-semibold flex-shrink-0", sm.cls)}>{sm.label}</span>
                     </div>
-                  </Card>
+
+                    <h3 className="text-[18px] font-bold font-heading text-neutral-900 mb-1 group-hover:text-emerald-600 transition-colors line-clamp-1">
+                      {t.name}
+                    </h3>
+
+                    <div className="flex items-center gap-1.5 text-[12px] text-neutral-500 mb-4">
+                      {t.city && (
+                        <>
+                          <MapPinIcon size={13} />
+                          <span>{t.city}</span>
+                          <span className="text-neutral-300">•</span>
+                        </>
+                      )}
+                      {t.startDate && (
+                        <>
+                          <CalendarIcon size={13} />
+                          <span>{new Date(t.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="mt-auto pt-4 border-t border-black/[0.05] flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-[12px] font-medium text-neutral-600">
+                        <UsersIcon size={14} />
+                        {t.teamCount} {t.teamCount === 1 ? "team" : "teams"}
+                      </span>
+                      <span className="text-[12px] font-semibold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                        View Details →
+                      </span>
+                    </div>
+                  </div>
                 </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
