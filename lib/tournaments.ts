@@ -43,3 +43,24 @@ export async function fetchTournaments(): Promise<Tournament[]> {
     teamCount: t.team_count?.[0]?.count ?? 0,
   }));
 }
+
+export async function fetchUserTeams(): Promise<Array<{ id: string; name: string; slug: string }>> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data } = await supabase
+    .from("team_members")
+    .select("teams(id, name, slug)")
+    .in("role", ["owner", "captain"])
+    .eq("user_id", user.id);
+  return (data ?? []).map((m: any) => m.teams).filter(Boolean) as Array<{ id: string; name: string; slug: string }>;
+}
+
+export async function registerTeamForTournament(tournamentId: string, teamId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { error } = await supabase.from("tournament_teams").insert({
+    tournament_id: tournamentId,
+    team_id: teamId,
+  });
+  return !error;
+}
