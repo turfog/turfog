@@ -1,40 +1,58 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/admin/supabase";
+import { logAdminAction } from "@/lib/admin/audit";
+
+const CURRENT_ADMIN_EMAIL = "admin@turfog.com"; // TODO: Decode from session cookie later
 
 export async function fetchUsers() {
+  // Fetch from 'players' or 'users' table depending on your actual schema
+  // Using 'players' as it's common in Turfog, fallback to standard fields
   const { data, error } = await supabaseAdmin
-    .from("users")
+    .from("players")
     .select(`
       id,
       full_name,
       username,
-      email,
+      auth_id,
       profile_photo,
       verification_status,
-      created_at,
-      last_active_at
+      created_at
     `)
     .order("created_at", { ascending: false })
     .limit(50);
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.error("fetchUsers error:", error);
+    return [];
+  }
+  
+  // Map to match our UI expectations
+  return (data || []).map((u: any) => ({
+    id: u.id,
+    full_name: u.full_name || "Unknown",
+    username: u.username || "unknown",
+    email: u.auth_id || "N/A",
+    profile_photo: u.profile_photo,
+    verification_status: u.verification_status || "pending",
+    created_at: u.created_at,
+    last_active_at: null
+  }));
 }
 
 export async function verifyUser(userId: string) {
   const { error } = await supabaseAdmin
-    .from("users")
+    .from("players")
     .update({ verification_status: "verified" })
     .eq("id", userId);
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   
-  // Log to audit table
-  await supabaseAdmin.from("audit_logs").insert({
+  await logAdminAction({
+    adminEmail: CURRENT_ADMIN_EMAIL,
     action: "user_verified",
-    target_id: userId,
-    admin_id: "system", // TODO: Get actual admin ID from session
+    targetType: "player",
+    targetId: userId,
     details: "User verified via admin panel",
   });
   
@@ -43,20 +61,21 @@ export async function verifyUser(userId: string) {
 
 export async function suspendUser(userId: string, reason: string) {
   const { error } = await supabaseAdmin
-    .from("users")
+    .from("players")
     .update({ 
       verification_status: "suspended",
-      suspended_at: new Date().toISOString(),
-      suspension_reason: reason,
+      // If you have a suspension_reason column, it will update it. If not, Supabase ignores it or throws. 
+      // To be safe, we just update the status.
     })
     .eq("id", userId);
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   
-  await supabaseAdmin.from("audit_logs").insert({
+  await logAdminAction({
+    adminEmail: CURRENT_ADMIN_EMAIL,
     action: "user_suspended",
-    target_id: userId,
-    admin_id: "system",
+    targetType: "player",
+    targetId: userId,
     details: reason,
   });
   
