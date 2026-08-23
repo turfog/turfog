@@ -1,91 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { fetchPendingReports, dismissReport, resolveReport } from "./actions";
 import { 
   ShieldAlert, User, FileText, Flag, CheckCircle2, XCircle, 
-  Gavel, Star
+  Gavel, MessageSquare 
 } from "lucide-react";
-
-type ReportType = "post" | "user" | "match" | "review";
-type Severity = "critical" | "high" | "medium" | "low";
 
 interface Report {
   id: string;
-  type: ReportType;
+  reporter_id: string | null;
+  target_type: string;
+  target_id: string;
   reason: string;
-  severity: Severity;
-  reporter: string;
-  reportedUser: string;
-  contentSnippet: string;
-  timestamp: Date;
-  status: "pending" | "resolved";
+  details: string | null;
+  severity: string;
+  status: string;
+  created_at: string;
 }
 
-const typeConfig: Record<ReportType, { icon: any; label: string }> = {
+const typeConfig: Record<string, { icon: any; label: string }> = {
   post: { icon: FileText, label: "Post" },
   user: { icon: User, label: "User Profile" },
   match: { icon: Flag, label: "Match Dispute" },
-  review: { icon: Star, label: "Review" },
+  review: { icon: MessageSquare, label: "Review" },
 };
 
-const severityConfig: Record<Severity, { color: string; bg: string; label: string }> = {
+const severityConfig: Record<string, { color: string; bg: string; label: string }> = {
   critical: { color: "text-rose-700", bg: "bg-rose-50 border-rose-200", label: "Critical" },
   high: { color: "text-orange-700", bg: "bg-orange-50 border-orange-200", label: "High" },
   medium: { color: "text-amber-700", bg: "bg-amber-50 border-amber-200", label: "Medium" },
   low: { color: "text-blue-700", bg: "bg-blue-50 border-blue-200", label: "Low" },
 };
 
-const initialReports: Report[] = [
-  {
-    id: "R-992",
-    type: "user",
-    reason: "Fake Account / Bot",
-    severity: "critical",
-    reporter: "System Auto-Flag",
-    reportedUser: "@spammer_99",
-    contentSnippet: "Account created 5 mins ago, sent 40 identical DMs.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    status: "pending",
-  },
-  {
-    id: "R-991",
-    type: "post",
-    reason: "Hate Speech",
-    severity: "high",
-    reporter: "@rahul_s",
-    reportedUser: "@angry_guy",
-    contentSnippet: "Post contains discriminatory language regarding...",
-    timestamp: new Date(Date.now() - 1000 * 60 * 12),
-    status: "pending",
-  },
-  {
-    id: "R-990",
-    type: "match",
-    reason: "No-Show / Cancellation",
-    severity: "medium",
-    reporter: "@captain_priya",
-    reportedUser: "@vikky",
-    contentSnippet: "User did not show up for verified match #4412.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 45),
-    status: "pending",
-  },
-];
-
 export default function ModerationPage() {
-  const [reports, setReports] = useState<Report[]>(initialReports);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleResolve = (id: string, action: "dismiss" | "ban") => {
-    setReports((prev) => prev.filter((r) => r.id !== id));
-    console.log(`[AUDIT LOG] Admin resolved report ${id} with action: ${action}`);
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  const loadReports = async () => {
+    try {
+      const data = await fetchPendingReports();
+      setReports(data as Report[]);
+    } catch (error) {
+      console.error("Failed to load reports:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const pendingCount = reports.length;
+  const handleDismiss = async (id: string) => {
+    await dismissReport(id);
+    setReports((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleResolve = async (id: string) => {
+    const reason = prompt("Action taken (e.g., 'Banned user', 'Removed post'):");
+    if (!reason) return;
+    await resolveReport(id, reason);
+    setReports((prev) => prev.filter((r) => r.id !== id));
+  };
+
   const criticalCount = reports.filter(r => r.severity === "critical").length;
+
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-64 bg-neutral-200 rounded"></div>
+          <div className="h-64 bg-neutral-100 rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[24px] font-bold text-neutral-900 tracking-tight flex items-center gap-2">
@@ -101,12 +95,11 @@ export default function ModerationPage() {
              {criticalCount} Critical
            </span>
            <span className="px-3 py-1.5 bg-neutral-100 text-neutral-700 text-[12px] font-bold rounded-full border border-neutral-200">
-             {pendingCount} Pending
+             {reports.length} Pending
            </span>
         </div>
       </div>
 
-      {/* Queue */}
       <div className="bg-white border border-neutral-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-neutral-200 bg-neutral-50/50 flex items-center justify-between">
           <h2 className="text-[13px] font-semibold text-neutral-900">Moderation Queue</h2>
@@ -127,8 +120,8 @@ export default function ModerationPage() {
               </motion.div>
             ) : (
               reports.map((report) => {
-                const type = typeConfig[report.type];
-                const severity = severityConfig[report.severity];
+                const type = typeConfig[report.target_type] || typeConfig.post;
+                const severity = severityConfig[report.severity] || severityConfig.medium;
                 const Icon = type.icon;
 
                 return (
@@ -140,12 +133,10 @@ export default function ModerationPage() {
                     exit={{ opacity: 0, x: -50, transition: { duration: 0.2 } }}
                     className="group flex items-start gap-4 p-5 hover:bg-neutral-50/50 transition-colors"
                   >
-                    {/* Icon */}
                     <div className={`w-10 h-10 rounded-lg border ${severity.bg} flex items-center justify-center flex-shrink-0 ${severity.color}`}>
                       <Icon size={18} />
                     </div>
 
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${severity.color} ${severity.bg}`}>
@@ -157,29 +148,28 @@ export default function ModerationPage() {
                       </div>
                       
                       <p className="text-[14px] font-medium text-neutral-900 mb-1 truncate">
-                        Reported: <span className="text-neutral-500">@{report.reportedUser.replace("@","")}</span>
+                        Target ID: <span className="font-mono text-neutral-500">{report.target_id}</span>
                       </p>
                       <p className="text-[13px] text-neutral-600 line-clamp-2">
-                        "{report.contentSnippet}"
+                        "{report.details || report.reason}"
                       </p>
                       
                       <div className="flex items-center gap-3 mt-2 text-[11px] text-neutral-400">
-                        <span>Reported by: <span className="font-medium text-neutral-600">{report.reporter}</span></span>
+                        <span>Reporter: <span className="font-medium text-neutral-600">{report.reporter_id || "Anonymous"}</span></span>
                         <span>•</span>
-                        <span>{report.timestamp.toLocaleTimeString()}</span>
+                        <span>{new Date(report.created_at).toLocaleString()}</span>
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex flex-col gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity md:opacity-100">
                       <button
-                        onClick={() => handleResolve(report.id, "ban")}
+                        onClick={() => handleResolve(report.id)}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 text-white text-[12px] font-semibold rounded-md hover:bg-rose-700 transition-colors shadow-sm"
                       >
-                        <Gavel size={12} /> Remove/Ban
+                        <Gavel size={12} /> Take Action
                       </button>
                       <button
-                        onClick={() => handleResolve(report.id, "dismiss")}
+                        onClick={() => handleDismiss(report.id)}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-neutral-200 text-neutral-700 text-[12px] font-semibold rounded-md hover:bg-neutral-50 transition-colors"
                       >
                         <XCircle size={12} /> Dismiss
