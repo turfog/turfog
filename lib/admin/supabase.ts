@@ -1,16 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Admin client with service role key (bypasses RLS)
-// NEVER expose this in client-side code!
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // You'll need to add this to .env.local
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+// Fallback placeholders prevent a build-time crash if env vars are missing.
+// Real env vars always override these in dev and production.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-service-key";
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
 export { supabaseAdmin };
