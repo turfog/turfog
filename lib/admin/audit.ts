@@ -6,6 +6,7 @@ export type AuditAction =
   | "ad_approved" 
   | "ad_rejected" 
   | "escrow_released" 
+  | "escrow_refunded" 
   | "content_removed";
 
 export async function logAdminAction(params: {

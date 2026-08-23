@@ -13,12 +13,11 @@ interface Order {
   disputeReason?: string;
 }
 
-export function MarketplaceDisputeDrawer({ order, onClose }: { order: Order | null; onClose: () => void }) {
+export function MarketplaceDisputeDrawer({ order, onClose, onResolve }: { order: Order | null; onClose: () => void; onResolve?: (orderId: string, action: "release" | "refund") => void }) {
   if (!order) return null;
 
   const handleAction = (action: "release" | "refund") => {
-    console.log(`[ESCROW ACTION] Order ${order.id}: ${action}`);
-    alert(`Funds ${action === "release" ? "released to seller" : "refunded to buyer"}! (Mock action logged to Audit)`);
+    onResolve?.(order.id, action);
     onClose();
   };
 

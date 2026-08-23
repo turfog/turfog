@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable, Column } from "@/components/admin/admin-ui/DataTable";
 import { MarketplaceDisputeDrawer } from "@/components/admin/admin-ui/MarketplaceDisputeDrawer";
+import { fetchOrders, resolveOrderDispute } from "./actions";
 import { ShoppingBag, DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
 
 interface Order {
@@ -14,13 +15,6 @@ interface Order {
   status: "Completed" | "In Escrow" | "Disputed";
   disputeReason?: string;
 }
-
-const mockOrders: Order[] = [
-  { id: "ORD-881", product: "Nike Mercurial Vapor 14", buyer: "Rahul S.", seller: "Vikram K.", amount: 4500, status: "Completed" },
-  { id: "ORD-882", product: "SG Cricket Bat (English Willow)", buyer: "Priya P.", seller: "Rohan M.", amount: 12000, status: "In Escrow" },
-  { id: "ORD-883", product: "Pickleball Paddle Set", buyer: "Aisha K.", seller: "Sports Hub Store", amount: 2800, status: "Disputed", disputeReason: "Item arrived with a cracked handle, seller refuses to return." },
-  { id: "ORD-884", product: "Adidas Copa Mundials", buyer: "Dev K.", seller: "Sneha R.", amount: 3200, status: "Completed" },
-];
 
 const columns: Column<Order>[] = [
   { key: "id", label: "Order ID", render: (row) => <span className="font-mono font-medium text-neutral-900">{row.id}</span> },
@@ -42,14 +36,54 @@ const columns: Column<Order>[] = [
 ];
 
 export default function MarketplacePage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    try {
+      const data = await fetchOrders();
+      setOrders(data as Order[]);
+    } catch (e) {
+      console.error("Failed to load orders:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResolve = async (orderId: string, action: "release" | "refund") => {
+    try {
+      await resolveOrderDispute(orderId, action);
+      await loadOrders();
+    } catch (e) {
+      alert("Failed to resolve dispute. Check console.");
+    }
+  };
+
+  const gmv = orders.reduce((s, o) => s + o.amount, 0);
+  const disputed = orders.filter(o => o.status === "Disputed").length;
+
   const kpis = [
-    { label: "Total GMV (30d)", value: "₹14.2M", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Active Orders", value: "1,204", icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Platform Fee Revenue", value: "₹710K", icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
-    { label: "Open Disputes", value: "12", icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50" },
+    { label: "Total GMV (loaded)", value: `₹${gmv.toLocaleString()}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Orders Loaded", value: orders.length.toLocaleString(), icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Platform Fee (5%)", value: `₹${Math.round(gmv * 0.05).toLocaleString()}`, icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "Open Disputes", value: disputed.toLocaleString(), icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50" },
   ];
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-64 bg-neutral-200 rounded"></div>
+          <div className="h-64 bg-neutral-100 rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -63,7 +97,6 @@ export default function MarketplacePage() {
         </button>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
           <div key={kpi.label} className="bg-white border border-neutral-200 rounded-xl p-4">
@@ -76,17 +109,19 @@ export default function MarketplacePage() {
         ))}
       </div>
 
-      {/* Orders Table */}
       <DataTable 
         columns={columns} 
-        data={mockOrders} 
+        data={orders} 
         pageSize={10} 
         onRowClick={(row) => setSelectedOrder(row)}
-        emptyStateMessage="No marketplace orders found."
+        emptyStateMessage="No marketplace orders found in the database yet."
       />
 
-      {/* The Time-Machine Drawer */}
-      <MarketplaceDisputeDrawer order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+      <MarketplaceDisputeDrawer 
+        order={selectedOrder} 
+        onClose={() => setSelectedOrder(null)}
+        onResolve={handleResolve}
+      />
     </div>
   );
 }
