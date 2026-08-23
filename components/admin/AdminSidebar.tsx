@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, Users, MessageSquare, Trophy, ShoppingBag, 
   Megaphone, Shield, Activity, ChevronRight, Zap,
-  DollarSign, Flag, Video, BarChart3, FileText, Settings, Users as UsersIcon
+  DollarSign, Flag, Video, BarChart3, FileText, Settings, Users as UsersIcon, TrendingUp
 } from "lucide-react";
 
 const navSections = [
@@ -40,6 +40,7 @@ const navSections = [
     title: "Intelligence",
     items: [
       { label: "Analytics & Growth", href: "/admin/analytics", icon: BarChart3 },
+      { label: "Growth & Retention", href: "/admin/growth", icon: TrendingUp },
       { label: "Trust & Safety", href: "/admin/moderation", icon: Shield },
     ]
   },
