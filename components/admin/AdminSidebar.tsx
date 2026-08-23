@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, Users, MessageSquare, Trophy, ShoppingBag, 
   Megaphone, Shield, Activity, ChevronRight, Zap,
-  DollarSign, Flag, Video, BarChart3
+  DollarSign, Flag, Video, BarChart3, FileText, Settings, Users as UsersIcon
 } from "lucide-react";
 
 const navSections = [
@@ -41,6 +41,14 @@ const navSections = [
     items: [
       { label: "Analytics & Growth", href: "/admin/analytics", icon: BarChart3 },
       { label: "Trust & Safety", href: "/admin/moderation", icon: Shield },
+    ]
+  },
+  {
+    title: "Administration",
+    items: [
+      { label: "Audit Logs", href: "/admin/audit", icon: FileText },
+      { label: "Admin Users & Roles", href: "/admin/admin-users", icon: UsersIcon },
+      { label: "System Settings", href: "/admin/settings", icon: Settings },
     ]
   }
 ];
