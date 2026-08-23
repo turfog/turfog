@@ -6,20 +6,27 @@ import { X, ShieldCheck, UserX, Eye, Activity, Calendar, AlertTriangle } from "l
 
 interface User {
   id: string;
-  name: string;
-  username: string;
-  email: string;
-  status: string;
-  sport: string;
-  joined: string;
+  full_name?: string;
+  name?: string;
+  username?: string;
+  email?: string;
+  verification_status?: string;
+  status?: string;
+  sport?: string;
+  joined?: string;
+  created_at?: string;
+  profile_photo?: string | null;
+  [key: string]: any;
 }
 
 interface User360DrawerProps {
   user: User | null;
   onClose: () => void;
+  onVerify?: (userId: string) => void;
+  onSuspend?: (userId: string) => void;
 }
 
-export function User360Drawer({ user, onClose }: User360DrawerProps) {
+export function User360Drawer({ user, onClose, onVerify, onSuspend }: User360DrawerProps) {
   const [tab, setTab] = useState<"overview" | "activity" | "audit">("overview");
 
   if (!user) return null;
@@ -41,17 +48,17 @@ export function User360Drawer({ user, onClose }: User360DrawerProps) {
           <div className="px-6 py-6 border-b border-neutral-100">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300 flex items-center justify-center text-[18px] font-bold text-neutral-600 shadow-sm flex-shrink-0">
-                {user.name.split(" ").map(n => n[0]).join("")}
+                {(user.full_name || user.name || "U").split(" ").map(n => n[0]).join("").substring(0, 2)}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-[18px] font-bold text-neutral-900">{user.name}</h3>
+                <h3 className="text-[18px] font-bold text-neutral-900">{user.full_name || user.name}</h3>
                 <p className="text-[13px] text-neutral-500 mb-2 truncate">@{user.username} • {user.email}</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {user.status === "Verified" ? (
+                  {(user.verification_status === "verified" || user.status === "Verified") ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200">
                       <ShieldCheck size={10} /> Verified
                     </span>
-                  ) : user.status === "Pending" ? (
+                  ) : (user.verification_status === "pending" || user.status === "Pending") ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-200">
                       <AlertTriangle size={10} /> Pending Review
                     </span>
@@ -61,7 +68,7 @@ export function User360Drawer({ user, onClose }: User360DrawerProps) {
                     </span>
                   )}
                   <span className="text-[11px] text-neutral-400 flex items-center gap-1">
-                    <Calendar size={10} /> Joined {user.joined}
+                    <Calendar size={10} /> Joined {user.joined || new Date(user.created_at || Date.now()).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -69,13 +76,19 @@ export function User360Drawer({ user, onClose }: User360DrawerProps) {
 
             {/* Quick Actions */}
             <div className="flex items-center gap-2 mt-6">
-              <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 text-white text-[12px] font-semibold rounded-lg hover:bg-emerald-700 transition-colors">
+              <button 
+                onClick={() => onVerify?.(user.id)}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 text-white text-[12px] font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
+              >
                 <ShieldCheck size={14} /> Verify User
               </button>
               <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-neutral-200 text-neutral-700 text-[12px] font-semibold rounded-lg hover:bg-neutral-50 transition-colors">
                 <Eye size={14} /> Impersonate
               </button>
-              <button className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-rose-200 text-rose-600 text-[12px] font-semibold rounded-lg hover:bg-rose-50 transition-colors">
+              <button 
+                onClick={() => onSuspend?.(user.id)}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-rose-200 text-rose-600 text-[12px] font-semibold rounded-lg hover:bg-rose-50 transition-colors"
+              >
                 <UserX size={14} /> Suspend
               </button>
             </div>

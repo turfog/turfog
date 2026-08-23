@@ -1,57 +1,119 @@
 "use client";
 
-import { useState } from "react";
-import { User360Drawer } from "@/components/admin/admin-ui/User360Drawer";
-
+import { useState, useEffect } from "react";
 import { DataTable, Column } from "@/components/admin/admin-ui/DataTable";
-import { Shield, CheckCircle2, AlertTriangle } from "lucide-react";
+import { User360Drawer } from "@/components/admin/admin-ui/User360Drawer";
+import { fetchUsers, verifyUser, suspendUser } from "./actions";
+import { CheckCircle2, AlertTriangle, UserX, Calendar } from "lucide-react";
 
-// Mock data for demonstration (will be replaced by DB queries)
-const mockUsers = [
-  { id: "1", name: "Rahul Sharma", username: "rahul_s", email: "rahul@gmail.com", status: "Verified", sport: "Football", joined: "2024-01-12" },
-  { id: "2", name: "Priya Patel", username: "priya.p", email: "priya@outlook.com", status: "Pending", sport: "Badminton", joined: "2024-02-05" },
-  { id: "3", name: "Vikram Singh", username: "vikky", email: "vikram@yahoo.com", status: "Suspended", sport: "Cricket", joined: "2023-11-20" },
-  { id: "4", name: "Aisha Khan", username: "aisha_k", email: "aisha@gmail.com", status: "Verified", sport: "Pickleball", joined: "2024-03-01" },
-  { id: "5", name: "Rohan Mehta", username: "rohan.m", email: "rohan@outlook.com", status: "Verified", sport: "Football", joined: "2023-12-15" },
-  { id: "6", name: "Sneha Reddy", username: "sneha_r", email: "sneha@gmail.com", status: "Pending", sport: "Badminton", joined: "2024-03-10" },
-  { id: "7", name: "Arjun Nair", username: "arjun", email: "arjun@yahoo.com", status: "Verified", sport: "Cricket", joined: "2024-01-22" },
-  { id: "8", name: "Kavya Iyer", username: "kavya.i", email: "kavya@gmail.com", status: "Verified", sport: "Pickleball", joined: "2024-02-28" },
-  { id: "9", name: "Dev Kapoor", username: "dev_k", email: "dev@outlook.com", status: "Suspended", sport: "Football", joined: "2023-10-05" },
-  { id: "10", name: "Meera Joshi", username: "meera.j", email: "meera@gmail.com", status: "Verified", sport: "Badminton", joined: "2024-03-15" },
-];
-
-const columns: Column<typeof mockUsers[0]>[] = [
-  { 
-    key: "name", 
-    label: "User", 
-    render: (row) => (
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300 flex items-center justify-center text-[11px] font-bold text-neutral-600">
-          {row.name.split(" ").map(n => n[0]).join("")}
-        </div>
-        <div>
-          <p className="font-medium text-neutral-900">{row.name}</p>
-          <p className="text-[11px] text-neutral-500">@{row.username}</p>
-        </div>
-      </div>
-    )
-  },
-  { key: "email", label: "Email" },
-  { key: "sport", label: "Primary Sport" },
-  { 
-    key: "status", 
-    label: "Status",
-    render: (row) => {
-      if (row.status === "Verified") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200"><CheckCircle2 size={10}/>Verified</span>;
-      if (row.status === "Pending") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-200"><AlertTriangle size={10}/>Pending</span>;
-      return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[11px] font-semibold border border-rose-200"><Shield size={10}/>Suspended</span>;
-    }
-  },
-  { key: "joined", label: "Joined" },
-];
+interface User {
+  id: string;
+  full_name: string;
+  username: string;
+  email: string;
+  profile_photo: string | null;
+  verification_status: string;
+  created_at: string;
+  last_active_at: string | null;
+}
 
 export default function UsersPage() {
-  const [selectedUser, setSelectedUser] = useState<typeof mockUsers[0] | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      const data = await fetchUsers();
+      setUsers(data);
+    } catch (error) {
+      console.error("Failed to load users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async (userId: string) => {
+    try {
+      await verifyUser(userId);
+      await loadUsers();
+      alert("User verified successfully!");
+    } catch (error) {
+      alert("Failed to verify user");
+    }
+  };
+
+  const handleSuspend = async (userId: string) => {
+    const reason = prompt("Reason for suspension:");
+    if (!reason) return;
+    
+    try {
+      await suspendUser(userId, reason);
+      await loadUsers();
+      alert("User suspended successfully!");
+    } catch (error) {
+      alert("Failed to suspend user");
+    }
+  };
+
+  const columns: Column<User>[] = [
+    { 
+      key: "full_name", 
+      label: "User", 
+      render: (row) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300 flex items-center justify-center text-[12px] font-bold text-neutral-600 overflow-hidden">
+            {row.profile_photo ? (
+              <img src={row.profile_photo} alt={row.full_name} className="w-full h-full object-cover" />
+            ) : (
+              row.full_name.split(" ").map(n => n[0]).join("")
+            )}
+          </div>
+          <div>
+            <p className="font-medium text-neutral-900">{row.full_name}</p>
+            <p className="text-[11px] text-neutral-500">@{row.username}</p>
+          </div>
+        </div>
+      )
+    },
+    { key: "email", label: "Email", render: (row) => <span className="text-[12px] text-neutral-600">{row.email}</span> },
+    { 
+      key: "verification_status", 
+      label: "Status",
+      render: (row) => {
+        if (row.verification_status === "verified") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200"><CheckCircle2 size={10}/>Verified</span>;
+        if (row.verification_status === "pending") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-200"><AlertTriangle size={10}/>Pending</span>;
+        if (row.verification_status === "suspended") return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[11px] font-semibold border border-rose-200"><UserX size={10}/>Suspended</span>;
+        return <span className="text-[11px] text-neutral-500">{row.verification_status}</span>;
+      }
+    },
+    { 
+      key: "created_at", 
+      label: "Joined", 
+      render: (row) => (
+        <div className="flex items-center gap-1 text-[11px] text-neutral-500">
+          <Calendar size={10} />
+          {new Date(row.created_at).toLocaleDateString()}
+        </div>
+      )
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-64 bg-neutral-200 rounded"></div>
+          <div className="h-64 bg-neutral-100 rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -64,9 +126,14 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <DataTable columns={columns} data={mockUsers} pageSize={8} onRowClick={(row) => setSelectedUser(row)} />
-      
-      <User360Drawer user={selectedUser} onClose={() => setSelectedUser(null)} />
+      <DataTable columns={columns} data={users} pageSize={10} onRowClick={setSelectedUser} />
+
+      <User360Drawer 
+        user={selectedUser} 
+        onClose={() => setSelectedUser(null)}
+        onVerify={handleVerify}
+        onSuspend={handleSuspend}
+      />
     </div>
   );
 }
