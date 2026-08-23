@@ -15,12 +15,11 @@ interface Campaign {
   adCopy: string;
 }
 
-export function AdvertisingReviewDrawer({ campaign, onClose }: { campaign: Campaign | null; onClose: () => void }) {
+export function AdvertisingReviewDrawer({ campaign, onClose, onReview }: { campaign: Campaign | null; onClose: () => void; onReview?: (campaignId: string, action: "approve" | "reject") => void }) {
   if (!campaign) return null;
 
   const handleAction = (action: "approve" | "reject") => {
-    console.log(`[AD REVIEW] Campaign ${campaign.id}: ${action}`);
-    alert(`Campaign ${action === "approve" ? "Approved and pushed live!" : "Rejected for policy violation."}`);
+    onReview?.(campaign.id, action);
     onClose();
   };
 

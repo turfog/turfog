@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable, Column } from "@/components/admin/admin-ui/DataTable";
 import { AdvertisingReviewDrawer } from "@/components/admin/admin-ui/AdvertisingReviewDrawer";
+import { fetchCampaigns, reviewCampaign } from "./actions";
 import { Megaphone, DollarSign, Eye, Clock } from "lucide-react";
 
 interface Campaign {
@@ -16,13 +17,6 @@ interface Campaign {
   location: string;
   adCopy: string;
 }
-
-const mockCampaigns: Campaign[] = [
-  { id: "AD-101", name: "Nike Mumbai Football Cup", advertiser: "Nike India", status: "Live", budget: 50000, spend: 12400, audience: "Football players", location: "Mumbai", adCopy: "Gear up for the ultimate 5v5 tournament. Register your squad today and win exclusive Nike merch!" },
-  { id: "AD-102", name: "Andheri Turf Weekend Promo", advertiser: "Andheri Sports Club", status: "Pending Review", budget: 15000, spend: 0, audience: "Casual players", location: "Andheri West", adCopy: "Book your weekend slots now at 20% off! Premium astroturf, floodlights, and changing rooms available." },
-  { id: "AD-103", name: "Pro Gear Clearance Sale", advertiser: "Sports Hub Store", status: "Rejected", budget: 30000, spend: 0, audience: "Cricket enthusiasts", location: "All India", adCopy: "Massive discounts on SG and SS bats. Buy now before stock runs out!" },
-  { id: "AD-104", name: "Pickleball Beginner Clinic", advertiser: "Smash Padel Club", status: "Paused", budget: 10000, spend: 4200, audience: "Beginners", location: "Bangalore", adCopy: "Never played Pickleball? Join our free introductory clinic this Saturday." },
-];
 
 const columns: Column<Campaign>[] = [
   { key: "name", label: "Campaign", render: (row) => (
@@ -46,14 +40,55 @@ const columns: Column<Campaign>[] = [
 ];
 
 export default function AdvertisingPage() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
+  useEffect(() => {
+    loadCampaigns();
+  }, []);
+
+  const loadCampaigns = async () => {
+    try {
+      const data = await fetchCampaigns();
+      setCampaigns(data as Campaign[]);
+    } catch (e) {
+      console.error("Failed to load campaigns:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReview = async (campaignId: string, action: "approve" | "reject") => {
+    try {
+      await reviewCampaign(campaignId, action);
+      await loadCampaigns();
+    } catch (e) {
+      alert("Failed to update campaign. Check console.");
+    }
+  };
+
+  const adRevenue = campaigns.reduce((s, c) => s + c.spend, 0);
+  const liveCount = campaigns.filter(c => c.status === "Live").length;
+  const pendingCount = campaigns.filter(c => c.status === "Pending Review").length;
+
   const kpis = [
-    { label: "Ad Revenue (30d)", value: "₹840K", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Active Campaigns", value: "142", icon: Megaphone, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { label: "Total Impressions", value: "4.2M", icon: Eye, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Pending Approvals", value: "8", icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "Ad Revenue (loaded)", value: `₹${adRevenue.toLocaleString()}`, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Active Campaigns", value: liveCount.toLocaleString(), icon: Megaphone, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { label: "Total Spend", value: `₹${adRevenue.toLocaleString()}`, icon: Eye, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Pending Approvals", value: pendingCount.toLocaleString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
   ];
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-64 bg-neutral-200 rounded"></div>
+          <div className="h-64 bg-neutral-100 rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -64,7 +99,6 @@ export default function AdvertisingPage() {
         </div>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
           <div key={kpi.label} className="bg-white border border-neutral-200 rounded-xl p-4">
@@ -77,17 +111,19 @@ export default function AdvertisingPage() {
         ))}
       </div>
 
-      {/* Campaigns Table */}
       <DataTable 
         columns={columns} 
-        data={mockCampaigns} 
+        data={campaigns} 
         pageSize={10} 
         onRowClick={(row) => setSelectedCampaign(row)}
-        emptyStateMessage="No advertising campaigns found."
+        emptyStateMessage="No advertising campaigns found in the database yet."
       />
 
-      {/* Review Drawer */}
-      <AdvertisingReviewDrawer campaign={selectedCampaign} onClose={() => setSelectedCampaign(null)} />
+      <AdvertisingReviewDrawer 
+        campaign={selectedCampaign} 
+        onClose={() => setSelectedCampaign(null)}
+        onReview={handleReview}
+      />
     </div>
   );
 }
