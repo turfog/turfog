@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/lib/supabase";
 import { 
   Activity, UserPlus, Trophy, MessageSquare, ShoppingBag, 
   AlertTriangle, Zap, TrendingUp, Globe 
@@ -28,19 +29,7 @@ const eventConfig: Record<EventType, { icon: any; color: string; bg: string }> =
 };
 
 const initialEvents: PlatformEvent[] = [
-  { id: "1", type: "match_created", title: "New 5v5 Football match created", meta: "Andheri Turf • Mumbai", timestamp: new Date(), severity: "success" },
-  { id: "2", type: "registration", title: "Priya Patel joined Turfog", meta: "via Instagram Ad • Bangalore", timestamp: new Date(Date.now() - 4000), severity: "info" },
-  { id: "3", type: "order_placed", title: "Marketplace Order #9921 placed", meta: "₹2,400 • Nike Mercurial Vapor", timestamp: new Date(Date.now() - 12000), severity: "info" },
-  { id: "4", type: "report_filed", title: "Post reported for Spam", meta: "Post #8832 by @vikky", timestamp: new Date(Date.now() - 25000), severity: "warning" },
-];
-
-const incomingTemplates: Omit<PlatformEvent, "id" | "timestamp">[] = [
-  { type: "registration", title: "New user registered", meta: "via Organic Search • Delhi", severity: "info" },
-  { type: "match_created", title: "Box Cricket match scheduled", meta: "Bandra Turf • Mumbai", severity: "success" },
-  { type: "match_completed", title: "Match verified by both captains", meta: "Final Score: 4-2", severity: "success" },
-  { type: "post_published", title: "New viral moment shared", meta: "by @rahul_s • 120 likes", severity: "info" },
-  { type: "order_placed", title: "Pro Gear purchased", meta: "₹1,800 • SG Cricket Bat", severity: "info" },
-  { type: "report_filed", title: "User reported for no-show", meta: "Match #4412", severity: "warning" },
+  { id: "init-1", type: "match_created", title: "System connected to Supabase Realtime", meta: "Listening for live platform events...", timestamp: new Date(), severity: "success" },
 ];
 
 function timeAgo(date: Date, now: Date) {
@@ -55,35 +44,78 @@ export default function PulsePage() {
   const [events, setEvents] = useState<PlatformEvent[]>(initialEvents);
   const [now, setNow] = useState(new Date());
 
-  // Simulate real-time incoming events
+  // Tick the clock every 2.5s to update "timeAgo" strings
   useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(new Date()); // Force re-render to update "timeAgo" timestamps
-      
-      // 40% chance to inject a new event every 2.5 seconds
-      if (Math.random() < 0.4) {
-        const template = incomingTemplates[Math.floor(Math.random() * incomingTemplates.length)];
-        const newEvent: PlatformEvent = {
-          ...template,
-          id: Math.random().toString(36).substring(7),
-          timestamp: new Date(),
-        };
-        setEvents(prev => [newEvent, ...prev].slice(0, 25)); // Keep max 25 events
-      }
-    }, 2500);
+    const tick = setInterval(() => setNow(new Date()), 2500);
+    return () => clearInterval(tick);
+  }, []);
 
-    return () => clearInterval(interval);
+  // Supabase Realtime Subscription
+  useEffect(() => {
+    const supabase = createClient();
+    
+    const injectEvent = (payload: Omit<PlatformEvent, "id" | "timestamp">) => {
+      const newEvent: PlatformEvent = {
+        ...payload,
+        id: Math.random().toString(36).substring(7),
+        timestamp: new Date(),
+      };
+      setEvents((prev) => [newEvent, ...prev].slice(0, 25));
+    };
+
+    const channel = supabase
+      .channel("admin-pulse-feed")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "players" },
+        (payload: any) => {
+          injectEvent({
+            type: "registration",
+            title: `New user joined: ${payload.new.full_name || "Player"}`,
+            meta: `@${payload.new.username || "new_user"}`,
+            severity: "info",
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "reports" },
+        (payload: any) => {
+          injectEvent({
+            type: "report_filed",
+            title: `New ${payload.new.severity || "medium"} report filed`,
+            meta: `Reason: ${payload.new.reason}`,
+            severity: payload.new.severity === "critical" ? "critical" : "warning",
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "matches" },
+        (payload: any) => {
+          injectEvent({
+            type: "match_created",
+            title: "New match created",
+            meta: `Sport: ${payload.new.sport || "Unknown"}`,
+            severity: "success",
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const stats = [
-    { label: "Events / Min", value: "142", trend: "+12%", icon: Zap },
+    { label: "Events / Min", value: "Live", trend: "Realtime", icon: Zap },
     { label: "Active Users Now", value: "3,841", trend: "+4%", icon: Globe },
     { label: "System Load", value: "24%", trend: "Stable", icon: TrendingUp },
   ];
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      {/* Header */}
       <div>
         <div className="flex items-center gap-3">
           <h1 className="text-[24px] font-bold text-neutral-900 tracking-tight">Platform Pulse</h1>
@@ -92,13 +124,12 @@ export default function PulsePage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            LIVE
+            LIVE (REALTIME)
           </span>
         </div>
-        <p className="text-[13px] text-neutral-500 mt-1">Real-time operational activity across the Turfog ecosystem.</p>
+        <p className="text-[13px] text-neutral-500 mt-1">Real-time operational activity across the Turfog ecosystem via Supabase WebSockets.</p>
       </div>
 
-      {/* Pulse Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map((stat) => (
           <div key={stat.label} className="bg-white border border-neutral-200 rounded-xl p-4 flex items-center gap-4">
@@ -116,11 +147,10 @@ export default function PulsePage() {
         ))}
       </div>
 
-      {/* Live Feed */}
       <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-sm">
         <div className="px-5 py-3 border-b border-neutral-200 bg-neutral-50/50 flex items-center justify-between">
           <h2 className="text-[13px] font-semibold text-neutral-900">Live Activity Stream</h2>
-          <span className="text-[11px] text-neutral-500">Auto-updating</span>
+          <span className="text-[11px] text-neutral-500">Powered by Supabase Realtime</span>
         </div>
         
         <div className="divide-y divide-neutral-100 max-h-[600px] overflow-y-auto">
@@ -148,9 +178,6 @@ export default function PulsePage() {
                   <div className="text-right flex-shrink-0">
                     <p className="text-[11px] font-medium text-neutral-400 tabular-nums">{timeAgo(event.timestamp, now)}</p>
                   </div>
-                  <button className="text-[11px] font-semibold text-emerald-600 hover:underline opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    Inspect
-                  </button>
                 </motion.div>
               );
             })}
